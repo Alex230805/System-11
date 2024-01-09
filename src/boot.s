@@ -23,7 +23,7 @@ boot:
     clc
     sei
     ; 
-    ; To change the kernel config, changing the bootloader configuration is needed over the necessity yo add new kernel module.
+    ; To change the kernel config, changing the bootloader configuration is needed over the necessity to add new kernel module.
     ; So the system, even if you add as many kernel module as you want, it cannot be used by the system until the bootloader update is occurred
     ;
 
