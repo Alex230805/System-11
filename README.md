@@ -14,20 +14,15 @@
 
 # CF Card Support
 
-System-11 support out of the box a cf card simple support with an integration at file system level (<strong>ZenithFS</strong>).
+System-11 supporta immediatamente una semplice integrazione della scheda CF a livello di file system (<strong>ZenithFS</strong>).
 
+Il driver del dispositivo viene caricato all'avvio come modulo del kernel. Lo stato del dispositivo viene salvato nella ram bassa dove sono archiviate la variabile del kernel e la variabile dello stato del kernel.
 
-The device driver is loaded on boot as a kernel module.The Device status is saved in the low ram where kernel variable and kernel state variable are stored.
+Il driver è progettato per utilizzare uno spazio di indirizzi fino a 32 bit, che consente al sistema di archiviare fino a 4 GB di dati nel disco rigido.
 
+Il dispositivo viene montato nella sessione utente BASH dopo che il kernel ha inizializzato sia il driver che il supporto zenithFS.
 
-The Driver is designed to use an address space up to 32bit, wich allow the system to store at least 4gb of data into the hard drive. 
-
-
-The device is mounted in the user session of BASH after the kernel initialize both the Driver and the zenithFS support. 
-
-
-The device is usable in 2 different mode: 16bit and 32bit.
-Those type of mode are handled by the File System and it's possible to modify is operation by a simple command via bash.
+Il dispositivo è utilizzabile in 2 diverse modalità: 16bit e 32bit. Questo tipo di modalità è gestita dal File System ed è possibile modificare il suo funzionamento con un semplice comando tramite bash.
 
 
 # SD card support
