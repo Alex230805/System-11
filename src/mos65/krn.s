@@ -52,9 +52,10 @@ DYN_POINTER_H=$0301
 
 
 __K_BOOT:
-    lda #$00
-    ldx #$00
-    ldy #K_MODULE_NUMBER_ON_BOOT
+    lda #$00    ; load 0 into a
+    ldx #$00    ; load 0 into x
+    ldy #K_MODULE_NUMBER_ON_BOOT    ; load module number index
+    sta KERNEL_STATE            ; reset kernel state
 
     ; Kenrel initialization, first step: read the kernel init module and enable it
     __call_and_init:
@@ -72,10 +73,8 @@ __K_BOOT:
         bne __call_and_init 
         beq __call_and_init_end
     __k_error_panic:
-        nop
-    ;
-    ; Error panic code here
-    ;
+        lda KERNEL_WR_0
+        sta KERNEL_STATE
         jmp __K_BOOT
     __call_and_init_end:
     nop

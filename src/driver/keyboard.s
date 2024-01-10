@@ -20,6 +20,8 @@ __key_init:
     ;
     ;
     
+    lda #$ff
+    sta KEYBOARD_ENABLE     ; set enable status for keyboard
     rts
 
 

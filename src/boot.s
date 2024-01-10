@@ -8,7 +8,7 @@ K_MODULE_PRIORITY_LIST_HEAD=$0200
 K_MODULE_PRIORITY_LIST_END=$02ff
 
 
-K_MODULE_NUMBER_ON_BOOT=$05
+K_MODULE_NUMBER_ON_BOOT=$06
 
 
  .org $00
@@ -51,11 +51,11 @@ boot:
     lda #__cf_card_init+1
     sta K_MODULE_PRIORITY_LIST_HEAD+5
 
-    ; initialize generic perpherals
+    ; initialize serial port
 
-    lda #__ph_init
+    lda #__serial_init
     sta K_MODULE_PRIORITY_LIST_HEAD+5
-    lda #__ph_init
+    lda #__serial_init+1
     sta K_MODULE_PRIORITY_LIST_HEAD+6
 
     ; additional driver for general purpose:
@@ -63,8 +63,16 @@ boot:
 
     lda #__sd_init
     sta K_MODULE_PRIORITY_LIST_HEAD+7
-    lda #__sd_init
+    lda #__sd_init+1
     sta K_MODULE_PRIORITY_LIST_HEAD+8
+
+    
+    ; i2c initialization
+
+    lda __i2c_init
+    sta K_MODULE_PRIORITY_LIST_HEAD+9
+    lda __i2c_init+1
+    sta K_MODULE_PRIORITY_LIST_HEAD+10
 
 
     jmp __K_BOOT
@@ -86,8 +94,9 @@ boot:
  include "./driver/cf_card.s"
  include "./driver/fx_card.s"
  include "./driver/keyboard.s"
- include "./driver/peripherals.s"
  include "./driver/sd.s"
+ include "./driver/serial.s"
+ include "./driver/i2c.s"
 
 
  .org NMI_VECTOR
