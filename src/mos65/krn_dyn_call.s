@@ -10,7 +10,7 @@ K_KALL=__K_DYN_SYSCALL
 ;   Example of  system call:
 ;   
 ;   ...
-;   ldx SYS_0
+;   ldx #SYS_0
 ;   jsr K_KALL
 ;   ...
 ;
