@@ -31,49 +31,59 @@ boot:
     lda #K_MODULE_NUMBER_ON_BOOT    ; load module number sequence
     sta K_MODULE_ENUM               ; store it for future kernel usage
 
+    ldx K_MODULE_PRIORITY_LIST_HEAD
+
     ; load keyboard init module according to the driver selected
     lda #__key_init
-    sta K_MODULE_PRIORITY_LIST_HEAD
+    sta K_MODULE_PRIORITY_LIST_HEAD,x
+    inx
     lda #__key_init+1
-    sta K_MODULE_PRIORITY_LIST_HEAD+1
-
+    sta K_MODULE_PRIORITY_LIST_HEAD,x
+    inx
     ; same for video card
 
     lda #__fx_card_init
-    sta K_MODULE_PRIORITY_LIST_HEAD+2
+    sta K_MODULE_PRIORITY_LIST_HEAD,x
+    inx
     lda #__fx_card_init+1
-    sta K_MODULE_PRIORITY_LIST_HEAD+3
+    sta K_MODULE_PRIORITY_LIST_HEAD,x
+    inx
 
     ; same for cf card
 
     lda #__cf_card_init
-    sta K_MODULE_PRIORITY_LIST_HEAD+4
-    lda #__cf_card_init+1
-    sta K_MODULE_PRIORITY_LIST_HEAD+5
+    sta K_MODULE_PRIORITY_LIST_HEAD,x
+    inx
+    lda #__cf_card_init,x
+    sta K_MODULE_PRIORITY_LIST_HEAD,x
+    inx
 
     ; initialize serial port
 
     lda #__serial_init
-    sta K_MODULE_PRIORITY_LIST_HEAD+5
+    sta K_MODULE_PRIORITY_LIST_HEAD,x
+    inx
     lda #__serial_init+1
-    sta K_MODULE_PRIORITY_LIST_HEAD+6
+    sta K_MODULE_PRIORITY_LIST_HEAD,x
+    inx
 
     ; additional driver for general purpose:
     ; sd initialization
 
     lda #__sd_init
-    sta K_MODULE_PRIORITY_LIST_HEAD+7
+    sta K_MODULE_PRIORITY_LIST_HEAD,x
+    inx
     lda #__sd_init+1
-    sta K_MODULE_PRIORITY_LIST_HEAD+8
-
+    sta K_MODULE_PRIORITY_LIST_HEAD,x
+    inx
     
     ; i2c initialization
 
     lda __i2c_init
-    sta K_MODULE_PRIORITY_LIST_HEAD+9
+    sta K_MODULE_PRIORITY_LIST_HEAD,x
+    inx
     lda __i2c_init+1
-    sta K_MODULE_PRIORITY_LIST_HEAD+10
-
+    sta K_MODULE_PRIORITY_LIST_HEAD,x
 
     jmp __K_BOOT
 
@@ -82,7 +92,6 @@ boot:
  include "./mos65/krn.s"
  include "./mos65/krn_dyn_call.s"
  include "./mos65/krn_ramfs.s"
- include "./mos65/krn_reg.s"
  include "./mos65/kstate.s"
 
 ; FILE SYSTEM FILE

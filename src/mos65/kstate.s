@@ -26,15 +26,22 @@ CF_CARD_ENABLE=KERNEL_VARIABLE_HEADER+5
 
 CF_CARD_MOUNTED=KERNEL_VARIABLE_HEADER+6       ; cf card flag for check if the device is mounted
 
+V_SD_CARD_LB=KERNEL_VARIABLE_HEADER+7
+V_SD_CARD_HB=KERNEL_VARIABLE_HEADER+8
+
+SD_CARD_ENABLE=KERNEL_VARIABLE_HEADER+9
+
+SD_CARD_MOUNTED=KERNEL_VARIABLE_HEADER+10
+
 ; Graphics card status
 
-FX_CARD_ENABLE=KERNEL_VARIABLE_HEADER+7        ; enable status for cf card
-FX_CARD_STATUS=KERNEL_VARIABLE_HEADER+8        ; status for cf card
+FX_CARD_ENABLE=KERNEL_VARIABLE_HEADER+11        ; enable status for cf card
+FX_CARD_STATUS=KERNEL_VARIABLE_HEADER+12        ; status for cf card
 
-FX_CARD_MEMORY_MOUNTED=KERNEL_VARIABLE_HEADER+9 ; memory bank mounted currently
-FX_CARD_MEMORY_FREE=KERNEL_VARIABLE_HEADER+10   ; total memory free for current bank
-FX_CARD_MEMORY_USED=KERNEL_VARIABLE_HEADER+11 ; memory used from current bank
-FX_CARD_PAGE_FREE=KERNEL_VARIABLE_HEADER+12 ; page free (all bank)
+FX_CARD_MEMORY_MOUNTED=KERNEL_VARIABLE_HEADER+13 ; memory bank mounted currently
+FX_CARD_MEMORY_FREE=KERNEL_VARIABLE_HEADER+14   ; total memory free for current bank
+FX_CARD_MEMORY_USED=KERNEL_VARIABLE_HEADER+15 ; memory used from current bank
+FX_CARD_PAGE_FREE=KERNEL_VARIABLE_HEADER+16 ; page free (all bank)
 
 ; Zenith FS
 

@@ -9,12 +9,15 @@ CF_CARD_XHB=$89         ; x hight byte address
 CF_CARD_DATA_PORT=$8A   ; data port
 
 __cf_card_init:
+    ; apply the start address for cf card
     lda #$00
     sta CF_CARD_LB
     sta CF_CARD_HB
     sta CF_CARD_XLB
     sta CF_CARD_XHB
 
+
+    ; same with variable vector
     sta V_CF_CARD_LB
     sta V_CF_CARD_HB
     sta V_CF_CARD_XLB
@@ -23,6 +26,7 @@ __cf_card_init:
     lda #$FF
     sta CF_CARD_ENABLE     ; enable CF card status flag
 
+    ; zenith FS section
 
     ldx ZENITH_DEVICE_LIST ; load zenith device list enum
     cpx #$05                ; compare with 5 ( the number must be inferior to that )
