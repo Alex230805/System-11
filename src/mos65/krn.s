@@ -108,7 +108,7 @@ __K_BOOT:
         inx
         lda K_MODULE_PRIORITY_LIST_HEAD, x
         sta DYN_POINTER_H
-        jsr (DYN_POINTER)
+        jsr __k_initialize_device ; initialize device
         inx
         dey
         cpx #20
@@ -128,3 +128,8 @@ __K_BOOT:
     ;
     ;
     ; Jump to the bash
+
+
+    __k_initialize_device:
+        jmp (DYN_POINTER)   ; use rts from the init routine to go back in the initialization process
+        jmp __k_error_panic ; if for some reasons this doesn't work trigger the ___k_error_state
