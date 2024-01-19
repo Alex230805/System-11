@@ -36,3 +36,42 @@ FX_CARD_MEMORY_FREE=KERNEL_VARIABLE_HEADER+10   ; total memory free for current 
 FX_CARD_MEMORY_USED=KERNEL_VARIABLE_HEADER+11 ; memory used from current bank
 FX_CARD_PAGE_FREE=KERNEL_VARIABLE_HEADER+12 ; page free (all bank)
 
+; Zenith FS
+
+
+ZENITH_VARIABLE_HEADER=$0302        ; ZENITH_VARIABLE_HEADER
+
+ZENITH_CURRENT_DEVIE=ZENITH_VARIABLE_HEADER ; current device mounted ( enumerative rom A to D )
+
+ZENITH_DEVICE_CALL_1_lb=ZENITH_VARIABLE_HEADER+1   ; pointer to device driver function: type "set address"
+ZENITH_DEVICE_CALL_1_hb=ZENITH_VARIABLE_HEADER+2
+
+ZENITH_DEVICE_CALL_2_lb=ZENITH_VARIABLE_HEADER+3   ; pointer to device dirver function: type "read data"
+ZENITH_DEVICE_CALL_2_hb=ZENITH_VARIABLE_HEADER+4
+
+ZENITH_DEVICE_CALL_3_lb=ZENITH_VARIABLE_HEADER+5   ; pointer to device function: type "write data"
+ZENITH_DEVICE_CALL_3_hb=ZENITH_VARIABLE_HEADER+6
+
+ZENITH_DEVICE_CALL_4_lb=ZENITH_VARIABLE_HEADER+7   ; pointer to device function:type "get info"
+ZENITH_DEVICE_CALL_4_hb=ZENITH_VARIABLE_HEADER+8
+
+;
+;
+;   Zenith device function call
+;
+;   When a device get initialized a flag will be set true to identify a ready state.
+;   Zenith FS is going to read those set of flag to identify a list of avaliable devices and any device
+;   have to copy his function pointer into the zenith abstraction layer list ( in order by activation ).
+;
+
+ZENITH_ABLAYER_DEVICE_CALL_HEAD=ZENITH_VARIABLE_HEADER+9   ; zenith list to store device function
+ZENITH_ABLAYER_DEVICE_CALL_END=ZENITH_VARIABLE_HEADER+41
+
+ZENITH_ABLAYER_DEVICE_CALL_POINTER=ZENITH_VARIABLE_HEADER+42 ; current pointer of list
+
+; Zenith device: identify driver with a letter
+
+ZENTH_CF_ID=ZENITH_VARIABLE_HEADER+43
+ZENITH_SD_ID=ZENITH_VARIABLE_HEADER+44
+
+ZENITH_DEVICE_LIST=ZENITH_VARIABLE_HEADER+45 ; variable to identify free device slot letter

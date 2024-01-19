@@ -22,7 +22,67 @@ __cf_card_init:
 
     lda #$FF
     sta CF_CARD_ENABLE     ; enable CF card status flag
-    rts
+
+
+    ldx ZENITH_DEVICE_LIST ; load zenith device list enum
+    cpx #$05                ; compare with 5 ( the number must be inferior to that )
+    beq __cf_zenith_abort_addition  ; if ar equal then abort assignment
+    lda #"A"                 ; else load a into accumulator
+
+    adc ZENITH_DEVICE_LIST   ; sum it with the device list enum
+    sta ZENITH_CF_ID            ; save letter
+    
+    inx                       ; increment enum
+    stx ZENITH_DEVICE_LIST    ; save device list
+
+    jmp __cf_zenith_store_function_pointer  ; next start saving function pointer
+
+    __cf_zenith_abort_addition:
+        lda #$FF                            ; store alert status into zenith_cf_letter
+        sta ZENITH_CF                     
+        rts                                 ; return from call
+
+     __cf_zenith_store_function_pointer:
+    
+    ldx ZENITH_ABLAYER_DEVICE_CALL_POINTER  ; load device list pointer
+
+    ; save address for the 1st call
+    lda #__cf_set_address                 
+    sta ZENITH_ABLAYER_DEVICE_CALL_HEAD,x
+    inx
+    lda #__cf_set_address+1
+    sta ZENITH_ABLAYER_DEVICE_CALL_HEAD,x
+    inx
+
+    ; save address for the 2nd call
+    lda #__cf_card_read_content
+    sta ZENITH_ABLAYER_DEVICE_CALL_HEAD,x
+    inx
+    lda #__cf_card_read_content+1
+    sta ZENITH_ABLAYER_DEVICE_CALL_HEAD,x
+    inx
+
+
+    ; save address for the 3rd call
+    lda #__cf_card_write_content
+    sta ZENITH_ABLAYER_DEVICE_CALL_HEAD,x
+    inx
+    lda #__cf_card_write_content+1
+    sta ZENITH_ABLAYER_DEVICE_CALL_HEAD,x
+    inx
+
+    ; save address for the 4th call
+    lda #__cf_card_get_device_propriety
+    sta ZENITH_ABLAYER_DEVICE_CALL_HEAD,x
+    inx
+    lda #__cf_card_get_device_propriety+1
+    sta ZENITH_ABLAYER_DEVICE_CALL_HEAD,x
+    inx
+
+    ; save latest pointer position
+    stx ZENITH_ABLAYER_DEVICE_CALL_POINTER
+
+    rts         ; return from subroutine
 
 
 __cf_set_address:
