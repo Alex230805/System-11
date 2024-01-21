@@ -67,16 +67,6 @@ boot:
     sta K_MODULE_PRIORITY_LIST_HEAD,x
     inx
 
-    ; additional driver for general purpose:
-    ; sd initialization
-
-    lda #__sd_init
-    sta K_MODULE_PRIORITY_LIST_HEAD,x
-    inx
-    lda #__sd_init+1
-    sta K_MODULE_PRIORITY_LIST_HEAD,x
-    inx
-    
     ; i2c initialization
 
     lda __i2c_init
@@ -85,7 +75,18 @@ boot:
     lda __i2c_init+1
     sta K_MODULE_PRIORITY_LIST_HEAD,x
 
+        ; additional driver for general purpose:
+    ; sd initialization
+
+    lda #__sd_init
+    sta K_MODULE_PRIORITY_LIST_HEAD,x
+    inx
+    lda #__sd_init+1
+    sta K_MODULE_PRIORITY_LIST_HEAD,x
+    inx
+
     jmp __K_BOOT
+    
 
 
 ; KERNEL FILE
@@ -95,6 +96,7 @@ boot:
  include "./mos65/kstate.s"
 
 ; FILE SYSTEM FILE
+ include "./filesystem/zenithfs/z_init.s"
  include "./filesystem/zenithfs/zenith_kcall.s"
  include "./filesystem/zenithfs/zenith_root.s"
  include "./filesystem/zenithfs/zenith_file.s"

@@ -2,6 +2,7 @@
 ;   Kernel state for device and OS
 ;
 KERNEL_WR_0=$01 ; kernel boot error
+KERNEL_ZENITH_INIT_ERROR=$11
 
 KERNEL_STATE=$8B        ; kernel state
 
@@ -81,4 +82,4 @@ ZENITH_ABLAYER_DEVICE_CALL_POINTER=ZENITH_VARIABLE_HEADER+42 ; current pointer o
 ZENTH_CF_ID=ZENITH_VARIABLE_HEADER+43
 ZENITH_SD_ID=ZENITH_VARIABLE_HEADER+44
 
-ZENITH_DEVICE_LIST=ZENITH_VARIABLE_HEADER+45 ; variable to identify free device slot letter
+ZENITH_DEVICE_LIST=ZENITH_VARIABLE_HEADER+45 ; variable to identify used device letter

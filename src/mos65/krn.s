@@ -96,10 +96,11 @@ __K_BOOT:
 
     ; initialize file system variable for driver initialization
 
-    sta ZENITH_CF_ID
-    sta ZENITH_SD_ID   
-    sta ZENITH_DEVICE_LIST
-    sta ZENITH_CURRENT_DEVIE
+    sta ZENITH_ABLAYER_DEVICE_CALL_POINTER      ; initialie function list pointer
+    sta ZENITH_CF_ID                            ; letter id for cd card
+    sta ZENITH_SD_ID                            ; letter id for sd card
+    sta ZENITH_DEVICE_LIST                      ; list of identified devices
+    sta ZENITH_CURRENT_DEVIE                    ; current mounted devices
 
     ; Kenrel initialization, first step: read the kernel init module and enable it
     __call_and_init:
@@ -121,13 +122,8 @@ __K_BOOT:
         sta KERNEL_STATE
         jmp __K_BOOT
     __call_and_init_end:
-    nop
-    ;
-    ;
-    ;   Another kernel code here
-    ;
-    ;
-    ; Jump to the bash
+        
+    jsr ZENITH_INITFS   ; nitialize zenith FS
 
 
     __k_initialize_device:
