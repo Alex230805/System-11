@@ -27,6 +27,8 @@ __K_RAMS:
 
     rts
 
+; MALLOC
+
 ;
 ;   y -> the amount of page to allocate
 ;
