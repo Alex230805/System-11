@@ -96,7 +96,7 @@ boot:
  include "./mos65/kstate.s"
 
 ; FILE SYSTEM FILE
- include "./filesystem/zenithfs/z_init.s"
+ include "./filesystem/z_init.s"
  include "./filesystem/zenithfs/zenith_kcall.s"
  include "./filesystem/zenithfs/zenith_root.s"
  include "./filesystem/zenithfs/zenith_file.s"
