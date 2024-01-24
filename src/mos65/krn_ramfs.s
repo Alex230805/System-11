@@ -10,7 +10,7 @@ LOW_MEMORY_BANKING_REGISTER=$83
 HIGHT_MEMORY_BANKING_REGISTER=$84
 
 
-__K_RAM_MN:
+__K_RAMS:
     lda #RAM_PAGE
     sta RAM_FREE_PAGE                       ; reset the free page counter
 
@@ -84,7 +84,7 @@ __ram_malloc:
     __ram_malloc_assing_vector:
         sta RAM_ALLOCATED_ASSINGED_LETTER    ; assing letter
     __ram_malloc_start_alloc:               
-        cpy #$00                            ;  "while() do {} function"
+        cpy #$00                            ;  like "while() do {} function"
         beq __end_flag_allocation
         bne __ram_malloc_assing_vector_continue
 
