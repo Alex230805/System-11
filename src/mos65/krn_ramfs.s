@@ -79,7 +79,7 @@ __ram_malloc:
     __out_of_memory_error:
         lda #KERNEL_OUT_OF_MEMORY_ERROR     ; kernel panic -> out of memory error
         sta KERNEL_STATE
-        jmp __K_BOOT
+        jmp __kenrel_panic
 
     __ram_malloc_assing_vector:
         sta RAM_ALLOCATED_ASSINGED_LETTER    ; assing letter
@@ -134,7 +134,7 @@ __ram_malloc:
             __ram_malloc_error_out_of_memory_index:
                 lda #MALLOC_OUT_OF_MEMORY_INDEX
                 sta KERNEL_STATE
-                jmp __K_BOOT
+                jmp __kenrel_panic
 
             __ram_malloc_calculate_index:
                 sec
