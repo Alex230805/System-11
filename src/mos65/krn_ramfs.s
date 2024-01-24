@@ -20,10 +20,19 @@ __K_RAMS:
     lda #$00
     sta LOW_MEMORY_BANKING_REGISTER         ; setting up the default memory configuration
     sta HIGHT_MEMORY_BANKING_REGISTER
-
     sta RAM_PAGE_ALLOC_POINTER              ; reset the page alloc pointer
 
-    jsr __k_ram_init_set_page_address_table ; routine to set address table used by malloc and free
+
+    lda #$00
+    __reset_allocation_list:
+        sta RAM_PAGE_ALLOCATED_FLAG_HEAD,x
+        inx
+        cpx RAM_PAGE_ALLOCATED_FLAG_HEAD
+        bne __reset_allocation_list
+        beq __k_ram_init_map_paging
+
+    __k_ram_init_map_paging:
+        jsr __k_ram_init_set_page_address_table ; routine to set address table used by malloc and free
 
     rts
 
