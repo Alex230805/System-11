@@ -24,6 +24,7 @@ __sd_init:
     beq __sd_zenith_abort_addition  ; if ar equal then abort assignment
     lda #"A"                 ; else load a into accumulator
 
+    clc
     adc ZENITH_DEVICE_LIST   ; sum it with the device list enum
     sta ZENITH_SD_ID            ; save letter
     
