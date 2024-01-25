@@ -109,9 +109,12 @@ __cf_set_address:
 
 __cf_card_read_content:
     nop
+    rts
 
 __cf_card_write_content:
     nop
+    rts
 
 __cf_card_get_device_propriety:
     nop
+    rts

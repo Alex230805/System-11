@@ -1,4 +1,6 @@
 
+MOUNTED_FLAG=$FF
+
 ;
 ;   Init Zenith FS
 ;
@@ -41,10 +43,10 @@ ZENTH_INITFS:
         __zenith_mount_cf_card_fn:
             jsr __zenith_mount_set_function_pointer
 
-            lda #"A"                    ; set cf card id into current device
-            sta ZENITH_CURRENT_DEVIE
+            lda #"A"
+            jsr __zenith_mount_set_device
 
-            lda #$ff                    ; set mounted flag for cf card
+            lda #MOUNTED_FLAG                   ; set mounted flag for cf card
             sta CF_CARD_MOUNTED
 
             jmp __zenith_end_initialization
@@ -53,14 +55,15 @@ ZENTH_INITFS:
             jsr __zenith_mount_set_function_pointer
 
             lda #"A"                    ; set cf card id into current device
-            sta ZENITH_CURRENT_DEVIE
+            jsr __zenith_mount_set_device
 
-            lda #$ff                    ; set mounted flag for cf card
+            lda #MOUNTED_FLAG                    ; set mounted flag for cf card
             sta SD_CARD_MOUNTED
             
             jmp __zenith_end_initialization
 
     __zenith_end_initialization:
+        jsr _Z_ROOT                     ; use root
         rts                             ; return into kernel boot 
 
 
@@ -97,6 +100,11 @@ ZENTH_INITFS:
         lda ZENITH_ABLAYER_DEVICE_CALL_HEAD,x
         sta ZENITH_DEVICE_CALL_4_hb
 
+        rts
+
+    ; store letter for main device, based on a register
+    __zenith_mount_set_device:
+        sta ZENITH_CURRENT_DEVIE
         rts
 
 __zenith_init_error:                        ; error paic for zenith initialization failure
