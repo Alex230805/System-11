@@ -120,7 +120,7 @@ __K_BOOT:
     __k_error_panic:
         lda #KERNEL_WR_0
         sta KERNEL_STATE
-        jmp __kenrel_panic          ; trigger kenrel panic
+        jmp __kernel_panic          ; trigger kenrel panic
     __call_and_init_end:
         
     jsr ZENITH_INITFS   ; nitialize zenith FS
@@ -130,6 +130,8 @@ __K_BOOT:
 
     __k_initialize_device:
         jmp (DYN_POINTER)   ; use rts from the init routine to go back in the initialization process
+        lda #KERNEL_MISSING_POINTER
+        sta KERNEL_STATE    
         jmp __k_error_panic ; if for some reasons this doesn't work trigger the ___k_error_state
 
 
@@ -150,7 +152,20 @@ __kenrel_panic:
     __kernel_init_error:
         jmp __K_BOOT
     
-    __check_zenith_init_error:
+    __kernel_missing_pointer_error: 
+    
+    cmp #KERNEL_MISSING_POINTER
+    beq __kernel_missing_pointer_error_detected
+    bne __zenith_init_error_check
+
+    __kernel_missing_pointer_error_detected:
+        ;
+        ;  code to print error
+        ;
+        jmp __k_error_loop
+
+
+    __zenith_init_error_check:
     
     cmp #KERNEL_ZENITH_INIT_ERROR ; kernel zenith init error
     beq __kernel_zenith_init_error_detected
@@ -182,9 +197,8 @@ __kenrel_panic:
 
     __kernel_malloc_out_of_memory_index_detected:
         ;
+        ; code to print error
         ;
-        ;
-
         jmp __k_error_loop
     
     __kernel_force_error_panic:
@@ -197,3 +211,23 @@ __kenrel_panic:
 __k_error_loop:
     nop
     jmp __k_error_loop
+
+;
+;   Error msg
+;
+
+
+__kernel_missing_pointer_error_msg: 
+    .word "Error: missing return pointer trigger kernel panic"
+
+__zenith_init_error_msg:
+    .word "Error: failed to start file system .. Retry"
+
+__kernel_out_of_memory_error_msg:
+    .word "Error: out of memory error"
+
+__kernel_malloc_segmentation_fault_msg:
+    .word "Malloc: segmentation fault"
+
+__kernel_force_panic_msg:
+    .word "forced Kernel panic status: check your configuration!"

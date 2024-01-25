@@ -92,7 +92,7 @@ boot:
 ; KERNEL FILE
  include "./mos65/krn.s"
  include "./mos65/krn_dyn_call.s"
- include "./mos65/krn_ramfs.s"
+ include "./mos65/krn_rams.s"
  include "./mos65/kstate.s"
 
 ; FILE SYSTEM FILE

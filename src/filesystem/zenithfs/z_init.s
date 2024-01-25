@@ -110,4 +110,4 @@ ZENTH_INITFS:
 __zenith_init_error:                        ; error paic for zenith initialization failure
         lda #KERNEL_ZENITH_INIT_ERROR
         sta KERNEL_STATE
-        jmp __kenrel_panic  
+        jmp __kernel_panic  

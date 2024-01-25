@@ -1,4 +1,4 @@
-ZENITH_BUS_ERROR=$21
+
 
 
 _Z_ROOT:
@@ -33,4 +33,4 @@ __zenith_get_info:
 __zenith_bus_error:
     lda #ZENITH_BUS_ERROR
     sta KERNEL_STATE
-    jmp __K_BOOT
+    jmp __kernel_panic

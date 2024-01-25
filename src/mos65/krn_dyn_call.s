@@ -7,7 +7,7 @@ K_KALL=__K_DYN_SYSCALL
 ; kernel dynamic call dispacement: based on x register
 ;
 ;
-;   Example of  system call:
+;   Example of system call:
 ;   
 ;   ...
 ;   ldx #SYS_0

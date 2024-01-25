@@ -2,9 +2,14 @@
 ;   Kernel state for device and OS
 ;
 KERNEL_WR_0=$01 ; kernel boot error
+
 KERNEL_ZENITH_INIT_ERROR=$11    ; zenith boot error
+ZENITH_BUS_ERROR=$12            ; zenith bus error
+
 KERNEL_OUT_OF_MEMORY_ERROR=$21  ; kernel out of memory error
 MALLOC_OUT_OF_MEMORY_INDEX=$22  ; kernel out of memory index
+KERNEL_MISSING_POINTER=$31 ; missing general kernel return pointer 
+
 
 KERNEL_STATE=$8B        ; kernel state
 
