@@ -149,7 +149,17 @@ __ram_malloc:
     __ram_end_malloc:
         rts 
 
-
+;
+; a -> pre-assinged ram id to clear
+;
+;
+;   EX: if I use malloc to alloc 12 page of consecutive ram space,
+;   it will return an id to identify the memory space for a programm.
+;   Let's say that the id would be "A", if loaded program end, i need to call
+;   the "free" function to check the ram space with the "A" id and unflag it
+;   for make the assigned ram page ready to be used by another program. So to set it free
+;
+;
 __ram_free:
 
     rts
