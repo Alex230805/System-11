@@ -16,8 +16,8 @@ SYS_12=$0c
 
 ; Kernel kall assignment
 
-SYSTEM_CALL_0=$00 ; here insert the system call
-SYSTEM_CALL_1=$00
+SYSTEM_CALL_0=$00 ; here insert the system call like "SYSTEM_CALL_O=print_with_graphic_card"
+SYSTEM_CALL_1=$00 ; or "SYSTEM_CALL_3=__ram_malloc"
 SYSTEM_CALL_2=$00
 SYSTEM_CALL_3=$00
 SYSTEM_CALL_4=$00
@@ -118,14 +118,82 @@ __K_BOOT:
         bne __call_and_init 
         beq __call_and_init_end
     __k_error_panic:
-        lda KERNEL_WR_0
+        lda #KERNEL_WR_0
         sta KERNEL_STATE
-        jmp __K_BOOT
+        jmp __kenrel_panic          ; trigger kenrel panic
     __call_and_init_end:
         
     jsr ZENITH_INITFS   ; nitialize zenith FS
+
+    jsr __K_RAMS ; initialize ram management system (RAMS)
 
 
     __k_initialize_device:
         jmp (DYN_POINTER)   ; use rts from the init routine to go back in the initialization process
         jmp __k_error_panic ; if for some reasons this doesn't work trigger the ___k_error_state
+
+
+
+;
+;
+;   Kernel panic routine
+;
+;
+
+
+__kenrel_panic:
+    lda KERNEL_STATE
+    cmp #KERNEL_WR_0            ; kernel init error
+    beq __kernel_init_error     
+    bne __check_zenith_init_error 
+
+    __kernel_init_error:
+        jmp __K_BOOT
+    
+    __check_zenith_init_error:
+    
+    cmp #KERNEL_ZENITH_INIT_ERROR ; kernel zenith init error
+    beq __kernel_zenith_init_error_detected
+    bne __kernel_out_of_memory_check
+
+    __kernel_zenith_init_error_detected:
+        ;
+        ;    code to print error
+        ;
+        jmp __k_error_loop
+
+    __kernel_out_of_memory_check:
+
+    cmp #KERNEL_OUT_OF_MEMORY_ERROR ; kernel out memory error
+    beq __kernel_out_of_memory_error_detected
+    bne __kernel_check_out_of_memory_index
+
+    __kernel_out_of_memory_error_detected:
+        ;
+        ;   code to print error
+        ;
+        jmp __k_error_loop
+
+    __kernel_check_out_of_memory_index:
+
+    cmp #MALLOC_OUT_OF_MEMORY_INDEX
+    beq __kernel_malloc_out_of_memory_index_detected
+    bne __kernel_force_error_panic
+
+    __kernel_malloc_out_of_memory_index_detected:
+        ;
+        ;
+        ;
+
+        jmp __k_error_loop
+    
+    __kernel_force_error_panic:
+        ;
+        ;   code to print error
+        ;
+        jmp __k_error_loop
+
+    
+__k_error_loop:
+    nop
+    jmp __k_error_loop
