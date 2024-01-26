@@ -69,8 +69,14 @@ __ram_malloc:
         lda #$00                ; load $00 into a
         sta RAM_PAGE_ALLOC_POINTER  ; store it in ram
         pla                     ; pull accumulator from stack
+        jmp __ram_malloc_check_for_free_page
+
+
     __ram_malloc_check_for_free_page_inc_index: 
+        clc
         inx                     ; inc x
+        cpx #$80                ; max page limit
+        bcs __ram_out_of_request    ; if it's greater than limit
     __ram_malloc_check_for_free_page:
         lda RAM_PAGE_ALLOCATED_FLAG_HEAD,x      ; load content of flag register for allocated ram
         cmp #$00                                ; compare with the free cell id
@@ -161,8 +167,42 @@ __ram_malloc:
 ;
 ;
 __ram_free:
+    ldx #$00                                ; load x with 0
+    stx RAM_PAGE_ALLOC_POINTER              ; reset page pointer
 
-    rts
+    jmp __ram_free_start_check_for_id       ; start checking for id
+    
+    __ram_free_start_check_for_id_inc_x:
+        clc                                 ; clear carry
+        inx                                 ; inc x
+        cpx #$80                            ; compar with the max page limit
+        bcs __ram_free_end_free             ; if it's greater than limit
+
+    __ram_free_start_check_for_id:
+        cmp RAM_PAGE_ALLOCATED_FLAG_HEAD,x      ; compare the page cell value with the a content
+        beq __ram_free_unflag_id                ; if it's equal then unflag-it
+        bne __ram_free_start_check_for_id_inc_x ; if not start check nex one
+
+    __ram_free_unflag_id:
+        pha                                     ; push a int oaccumulator
+        lda #$00                                ; load 0 into accumulator
+        sta RAM_PAGE_ALLOCATED_FLAG_HEAD,x      ; reset flag
+        inc RAM_PAGE_ALLOC_POINTER              ; increment page count
+        pla                                     ; pull a from accumulator
+        jmp __ram_free_start_check_for_id_inc_x     ; continue to check
+
+    __ram_free_end_free:
+        lda #$00                                ; load a with 0
+        cmp RAM_PAGE_ALLOC_POINTER              ; check if any page was deleted
+        beq __ram_free_end_no_such_segment      ; if not then strigger a new kernel state
+        bne __ram_free_end_call                 ; if so simply exit
+
+        __ram_free_end_no_such_segment:
+            lda #FREE_NO_SUCH_SEGMENT           ; load free error 
+            sta KERNEL_STATE
+        
+    __ram_free_end_call:
+        rts                                     ; return from subroutine
 
 
 

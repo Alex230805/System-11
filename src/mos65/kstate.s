@@ -8,6 +8,9 @@ ZENITH_BUS_ERROR=$12            ; zenith bus error
 
 KERNEL_OUT_OF_MEMORY_ERROR=$21  ; kernel out of memory error
 MALLOC_OUT_OF_MEMORY_INDEX=$22  ; kernel out of memory index
+
+FREE_NO_SUCH_SEGMENT=$23        ; semment not found
+
 KERNEL_MISSING_POINTER=$31 ; missing general kernel return pointer 
 
 
@@ -134,5 +137,3 @@ RAM_HB_CALCULUS_ADDRESS=SYSTEM_RAM_HEADER+250
 ;
 ;
 ;
-;
->>>>>>> refs/remotes/System-11/master
