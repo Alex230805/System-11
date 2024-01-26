@@ -127,6 +127,7 @@ __K_BOOT:
 
     jsr __K_RAMS ; initialize ram management system (RAMS)
 
+    jmp __bash_cli
 
     __k_initialize_device:
         jmp (DYN_POINTER)   ; use rts from the init routine to go back in the initialization process
