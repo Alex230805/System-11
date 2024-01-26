@@ -47,6 +47,9 @@ __ram_malloc:
     tya 
     pha
 
+    ldx #$00
+    stx RAM_PAGE_ALLOC_POINTER  ; reset pointer
+
     lda RAM_FREE_PAGE           ; load ram free page
     cmp #$00                    ; compare with 0
     beq __ram_malloc_abort      ; if equal then abort operation
@@ -60,32 +63,29 @@ __ram_malloc:
     clc                         ; clear carry
     pla                         ; pull y content
     pha                         ; and re-save it
-
-
+    
+    __ram_malloc_check_for_free_page_reset_pointer:
+        pha                     ; push a into stack
+        lda #$00                ; load $00 into a
+        sta RAM_PAGE_ALLOC_POINTER  ; store it in ram
+        pla                     ; pull accumulator from stack
+    __ram_malloc_check_for_free_page_inc_index: 
+        inx                     ; inc x
     __ram_malloc_check_for_free_page:
-        ldx #$00
-        lda RAM_PAGE_ALLOC_POINTER,x
-        cmp #$00
-        beq __ram_malloc_check_for_free_page_y_index
-        bne __ram_out_of_request
+        lda RAM_PAGE_ALLOCATED_FLAG_HEAD,x      ; load content of flag register for allocated ram
+        cmp #$00                                ; compare with the free cell id
+        beq __ram_malloc_check_for_free_consec_page    ; if equal check the page disponibility
+        bne __ram_malloc_check_for_free_page_inc_index  ; if not repeat operation with the next cell
 
-        __ram_malloc_check_for_free_page_y_index:
-            clc
-            stx RAM_LB_CALCULUS_ADDRESS
-            cpy RAM_LB_CALCULUS_ADDRESS
-            bcc __ram_malloc_check_desired_amount
-            bcs __ram_malloc_check_for_free_page 
-
-            __ram_malloc_check_desired_amount:
-                clc
-                clv
-                sty RAM_LB_CALCULUS_ADDRESS
-                cpx RAM_LB_CALCULUS_ADDRESS
-                beq __ram_malloc_page_disp
-                bne __ram_malloc_continue_to_check_for_page
-
-                __ram_malloc_continue_to_check_for_page:
-                    jmp __ram_malloc_check_for_free_page
+        __ram_malloc_check_for_free_consec_page:
+            clc                                 ; clear carry
+            clv                                 ; clear overflow
+            
+            inc RAM_PAGE_ALLOC_POINTER          ; increment pointer
+            cpy RAM_PAGE_ALLOC_POINTER         ; compare the pointer with the desire page ammount
+            bcc __ram_malloc_check_for_free_page_inc_index   ; if its less then continue to check 
+            beq __ram_malloc_page_disp                      ; if it's equal then go to alloc page routine
+            jmp __ram_end_malloc
 
     __ram_out_of_request:       ; out of request -> abort operation
         jmp __ram_end_malloc
