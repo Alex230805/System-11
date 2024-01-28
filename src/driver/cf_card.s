@@ -109,11 +109,11 @@ __cf_set_address:
     rts                     ; return
 
 __cf_card_read_content:
-    nop
+    lda CF_CARD_DATA_PORT
     rts
 
 __cf_card_write_content:
-    nop
+    sta CF_CARD_DATA_PORT
     rts
 
 __cf_card_get_device_propriety:
