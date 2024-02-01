@@ -20,9 +20,9 @@ SYSTEM_CALL_0=$00 ; here insert the system call like "SYSTEM_CALL_O=print_with_g
 SYSTEM_CALL_1=$00 ; or "SYSTEM_CALL_3=__ram_malloc"
 SYSTEM_CALL_2=$00
 SYSTEM_CALL_3=$00
-SYSTEM_CALL_4=$00
-SYSTEM_CALL_5=$00
-SYSTEM_CALL_6=$00
+SYSTEM_CALL_4=__ram_malloc
+SYSTEM_CALL_5=__ram_free
+SYSTEM_CALL_6=__ZENITH_SUBCALL ; based on x register for the  call id 
 SYSTEM_CALL_7=$00
 SYSTEM_CALL_8=$00
 SYSTEM_CALL_9=$00
@@ -43,8 +43,6 @@ H_RAM_END=$8fff
 ; kernel driver queue and dynamic pointer allocation
 
 K_MODULE_ENUM=$0200
-K_MODULE_PRIORITY_LIST_HEAD=$0201
-K_MODULE_PRIORITY_LIST_END=$02ff
 
 DYN_POINTER=$0300
 DYN_POINTER_H=$0301
@@ -144,11 +142,11 @@ __K_BOOT:
 ;
 
 
-__kenrel_panic:
+__kernel_panic:
     lda KERNEL_STATE
     cmp #KERNEL_WR_0            ; kernel init error
     beq __kernel_init_error     
-    bne __check_zenith_init_error 
+    bne __kernel_missing_pointer_error
 
     __kernel_init_error:
         jmp __K_BOOT
@@ -160,6 +158,7 @@ __kenrel_panic:
     bne __zenith_init_error_check
 
     __kernel_missing_pointer_error_detected:
+        nop
         ;
         ;  code to print error
         ;
@@ -173,6 +172,7 @@ __kenrel_panic:
     bne __kernel_out_of_memory_check
 
     __kernel_zenith_init_error_detected:
+        nop
         ;
         ;    code to print error
         ;
@@ -185,6 +185,7 @@ __kenrel_panic:
     bne __kernel_check_out_of_memory_index
 
     __kernel_out_of_memory_error_detected:
+        nop
         ;
         ;   code to print error
         ;
@@ -197,6 +198,7 @@ __kenrel_panic:
     bne __kernel_force_error_panic
 
     __kernel_malloc_out_of_memory_index_detected:
+        nop
         ;
         ; code to print error
         ;
@@ -219,16 +221,16 @@ __k_error_loop:
 
 
 __kernel_missing_pointer_error_msg: 
-    .word "Error: missing return pointer trigger kernel panic"
+    .byte "Error: missing return pointer trigger kernel panic"
 
 __zenith_init_error_msg:
-    .word "Error: failed to start file system .. Retry"
+    .byte "Error: failed to start file system .. Retry"
 
 __kernel_out_of_memory_error_msg:
-    .word "Error: out of memory error"
+    .byte "Error: out of memory error"
 
 __kernel_malloc_segmentation_fault_msg:
-    .word "Malloc: segmentation fault"
+    .byte "Malloc: segmentation fault"
 
 __kernel_force_panic_msg:
-    .word "forced Kernel panic status: check your configuration!"
+    .byte "forced Kernel panic status: check your configuration!"

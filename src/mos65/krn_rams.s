@@ -141,7 +141,7 @@ __ram_malloc:
 
             clc
             pla 
-            adc #$RAM_LB_CALCULUS_ADDRESS
+            adc RAM_LB_CALCULUS_ADDRESS
             asl
             tax
             dex

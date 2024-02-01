@@ -35,7 +35,7 @@ __sd_init:
 
     __sd_zenith_abort_addition:
         lda #$FF                            ; store alert status into zenith_cf_letter
-        sta ZENITH_CF                     
+        sta ZENITH_SD_ID                    
         rts                                 ; return from call
 
      __sd_zenith_store_function_pointer:
@@ -43,35 +43,35 @@ __sd_init:
     ldx ZENITH_ABLAYER_DEVICE_CALL_POINTER  ; load device list pointer
 
     ; save address for the 1st call
-    lda #__sd_card_set_address                 
+    lda #<__sd_card_set_address                 
     sta ZENITH_ABLAYER_DEVICE_CALL_HEAD,x
     inx
-    lda #__sd_card_set_address+1
+    lda #>__sd_card_set_address
     sta ZENITH_ABLAYER_DEVICE_CALL_HEAD,x
     inx
 
     ; save address for the 2nd call
-    lda #__sd_card_read_content
+    lda #<__sd_card_read_content
     sta ZENITH_ABLAYER_DEVICE_CALL_HEAD,x
     inx
-    lda #__sd_card_read_content+1
+    lda #>__sd_card_read_content
     sta ZENITH_ABLAYER_DEVICE_CALL_HEAD,x
     inx
 
 
     ; save address for the 3rd call
-    lda #__sd_card_write_content
+    lda #<__sd_card_write_content
     sta ZENITH_ABLAYER_DEVICE_CALL_HEAD,x
     inx
-    lda #__sd_card_write_content+1
+    lda #>__sd_card_write_content
     sta ZENITH_ABLAYER_DEVICE_CALL_HEAD,x
     inx
 
     ; save address for the 4th call
-    lda #__sd_card_get_device_propriety
+    lda #<__sd_card_get_device_propriety
     sta ZENITH_ABLAYER_DEVICE_CALL_HEAD,x
     inx
-    lda #__sd_card_get_device_propriety+1
+    lda #>__sd_card_get_device_propriety
     sta ZENITH_ABLAYER_DEVICE_CALL_HEAD,x
     inx
 

@@ -4,7 +4,7 @@ NMI_VECTOR=$fffa
 STARTUP_VECTOR=$fffc
 
 
-K_MODULE_PRIORITY_LIST_HEAD=$0200
+K_MODULE_PRIORITY_LIST_HEAD=$0201
 K_MODULE_PRIORITY_LIST_END=$02ff
 
 
@@ -34,54 +34,55 @@ boot:
     ldx K_MODULE_PRIORITY_LIST_HEAD
 
     ; load keyboard init module according to the driver selected
-    lda #__key_init
+    lda #<__key_init
     sta K_MODULE_PRIORITY_LIST_HEAD,x
     inx
-    lda #__key_init+1
+    lda #>__key_init
     sta K_MODULE_PRIORITY_LIST_HEAD,x
     inx
     ; same for video card
 
-    lda #__fx_card_init
+    lda #<__fx_card_init
     sta K_MODULE_PRIORITY_LIST_HEAD,x
     inx
-    lda #__fx_card_init+1
+    lda #>__fx_card_init
     sta K_MODULE_PRIORITY_LIST_HEAD,x
     inx
 
     ; same for cf card
 
-    lda #__cf_card_init
+    lda #<__cf_card_init
     sta K_MODULE_PRIORITY_LIST_HEAD,x
     inx
-    lda #__cf_card_init,x
+    lda #>__cf_card_init
     sta K_MODULE_PRIORITY_LIST_HEAD,x
     inx
 
     ; initialize serial port
 
-    lda #__serial_init
+    lda #<__serial_init
     sta K_MODULE_PRIORITY_LIST_HEAD,x
     inx
-    lda #__serial_init+1
+    lda #>__serial_init
     sta K_MODULE_PRIORITY_LIST_HEAD,x
     inx
 
     ; i2c initialization
 
-    lda __i2c_init
+    lda #<__i2c_init
     sta K_MODULE_PRIORITY_LIST_HEAD,x
     inx
-    lda __i2c_init+1
+    lda #>__i2c_init
     sta K_MODULE_PRIORITY_LIST_HEAD,x
+    inx
 
         ; additional driver for general purpose:
     ; sd initialization
 
-    lda #__sd_init
+    lda #<__sd_init
     sta K_MODULE_PRIORITY_LIST_HEAD,x
     inx
-    lda #__sd_init+1
+    lda #>__sd_init
     sta K_MODULE_PRIORITY_LIST_HEAD,x
     inx
 
@@ -96,7 +97,7 @@ boot:
  include "./mos65/kstate.s"
 
 ; FILE SYSTEM FILE
- include "./filesystem/z_init.s"
+ include "./filesystem/zenithfs/z_init.s"
  include "./filesystem/zenithfs/zenith_kcall.s"
  include "./filesystem/zenithfs/zenith_root.s"
  include "./filesystem/zenithfs/zenith_file.s"
@@ -109,10 +110,13 @@ boot:
  include "./driver/serial.s"
  include "./driver/i2c.s"
 
+; program and ui
+
+ include "./cli/bash_int.s"
 
  .org NMI_VECTOR
- .word __SYS_INTERRUPT
+ .word __key_read
  .org STARTUP_VECTOR
  .word boot
  .org INTERRUPT_VECTOR
- .word __SYS_INTERRUPT
+ .word __key_read
