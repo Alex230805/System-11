@@ -221,32 +221,24 @@ __k_error_loop:
 
 
 __kernel_missing_pointer_error_msg: 
-<<<<<<< HEAD
     .word "Error: missing return pointer trigger kernel panic\n"
+    .byte $00
 
 __zenith_init_error_msg:
     .word "Error: failed to start file system .. Retry\n"
+    .byte $00
+
 
 __kernel_out_of_memory_error_msg:
     .word "Error: out of memory error\n"
+    .byte $00
+
 
 __kernel_malloc_segmentation_fault_msg:
     .word "Malloc: segmentation fault\n"
+    .byte $00
+
 
 __kernel_force_panic_msg:
     .word "forced Kernel panic status: check your configuration!\n"
-=======
-    .byte "Error: missing return pointer trigger kernel panic"
-
-__zenith_init_error_msg:
-    .byte "Error: failed to start file system .. Retry"
-
-__kernel_out_of_memory_error_msg:
-    .byte "Error: out of memory error"
-
-__kernel_malloc_segmentation_fault_msg:
-    .byte "Malloc: segmentation fault"
-
-__kernel_force_panic_msg:
-    .byte "forced Kernel panic status: check your configuration!"
->>>>>>> e244a6b5a0518a8e731c18aac886f6f355c819c7
+    .byte $00

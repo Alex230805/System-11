@@ -1,6 +1,13 @@
 ; Cf Card support
 
 
+;V_CF_CARD_LB=KERNEL_VARIABLE_HEADER+1          ; low byte address variable
+;V_CF_CARD_HB=KERNEL_VARIABLE_HEADER+2          ; hight byte address variable
+;V_CF_CARD_XLB=KERNEL_VARIABLE_HEADER+3         ; x low byte address variable
+;V_CF_CARD_XHB=KERNEL_VARIABLE_HEADER+4         ; x hight byte address variable
+
+
+
 CF_CARD_LB=$86          ; low byte address
 CF_CARD_HB=$87          ; hight byte address
 CF_CARD_XLB=$88         ; x low byte address
