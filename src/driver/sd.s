@@ -85,11 +85,13 @@ __sd_card_set_address:
     rts
 
 __sd_card_read_content:
-    nop
+    ldx KEYBOARD_WRITE_POINTER
+    jsr __i2c_read
     rts
 
 __sd_card_write_content:
-    nop
+    ldx KEYBOARD_READ_POINTER
+    jsr __i2c_write
     rts
 
 __sd_card_get_device_propriety:
