@@ -4,6 +4,10 @@
 _Z_ROOT:
     jsr __zenith_get_info
 
+    ;
+    ;   code here
+    ;
+    
     rts
 
 

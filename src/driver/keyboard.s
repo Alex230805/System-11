@@ -8,7 +8,6 @@ KEYBOARD_INTERFACE=DEV_1_READ_PORT_A_WRITE_PORT_B ; put the interface here
 KEYBOARD_BUFFER_LENGHT=$80 ; lenght of the keyboard buffer
 KEYBOARD_BUFFER_START=$02 ; keyboard buffer start
 
-__key_read=INTERRUPT_VECTOR
 
 __key_init:
     lda #$00
@@ -37,7 +36,7 @@ __key_read:
     clv
     cld
 
-__key_read:
+__key_read_start:
     ldx KEYBOARD_WRITE_POINTER ; load keyoard buffer write pointer
     lda KEYBOARD_INTERFACE  ; read from keyboard interface
     sta KEYBOARD_BUFFER_START, x ; store character into the buffer

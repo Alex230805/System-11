@@ -6,7 +6,7 @@ MOUNTED_FLAG=$FF
 ;
 
 
-ZENTH_INITFS:
+ZENITH_INITFS:
 
     lda #$00
     cmp ZENITH_DEVICE_LIST
@@ -51,7 +51,7 @@ ZENTH_INITFS:
 
             jmp __zenith_end_initialization
 
-        __zenith_mount_sd_card:
+        __zenith_mount_sd_card_fn:
             jsr __zenith_mount_set_function_pointer
 
             lda #"A"                    ; set cf card id into current device

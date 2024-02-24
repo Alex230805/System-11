@@ -4,6 +4,7 @@
 
 
 __bash_cli:
+    nop
     ;
     ;   code here
     ;
