@@ -1,12 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define ZENITH_IMPLEMENTATION
-
 #include "zenith.h"
-
+#define ZENITH_IMPLEMENTATION
 
 
 int main(void){
+
     return 0;
 }

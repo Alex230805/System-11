@@ -13,29 +13,29 @@
 #define TRUE 1
 #define FALSE 0
 
-typedef struct{
-    char * name;
-    struct zenith_node * next;  // next address
+typedef struct znode{
+    char name[9];
+    struct znode * next;  // next address
     char * value;               // actual array of data
     int has_next;               // flag
 }zenith_node_file;
 
 
-typedef struct{
-    char * name;
-    void * folder_0;                // node -> may be just a file or other folder
-    void * folder_1;
-    void * folder_2;
-    void * folder_3;
-    void * folder_4;
-    void * folder_5;
-    void * folder_6;
-    void * folder_7;
+typedef struct zfolder{
+    char name[9];
+    struct zenith_folder* folder_0;                // node -> may be just a file or other folder
+    struct zenith_folder * folder_1;
+    struct zenith_folder * folder_2;
+    struct zenith_folder * folder_3;
+    struct zenith_folder * folder_4;
+    struct zenith_folder * folder_5;
+    struct zenith_folder * folder_6;
+    struct zenith_folder * folder_7;
 }zenith_folder; 
 
 
-typedef struct{
-    char * name;
+typedef struct {
+    char name[9];
     uint8_t enable_flag;
     struct zenith_folder *folder_0;
     struct zenith_folder *folder_1;
@@ -54,37 +54,37 @@ typedef struct{
     void * page_pointer;            // array to keep track of available pointer
 }zenith_root_map;
 
-int mem_size;
-int map_size;
-int general_page_count;
+int mem_size = 0;
+int map_size = 0;
+int general_page_count = 0;
 
 
-void * header_pointer;
+void * header_pointer = NULL;
 
-void* create_partition(void * memory_chunk_head, size_t size);
-int zenith_mkdir(void * memory_chunk_head, char * name, char * path);
-void* zenith_cd(char * current_pos, char * path);
-void* zenith_get_free_address();
-char* get_name_from_path(char*path, int iteration_number, char separator);
+void* create_partition(size_t size);
+int zenith_mkdir(void * memory_chunk_head, char * name, char * current_pos,char * path);
+void* zenith_cd(void *memory_chunk_head,char * current_pos, char* path);
+void* zenith_get_free_address(void* memory_chunk_head);
+char* get_name_from_path(char*path, int iteration_number, char *separator);
 void* compare_dir_name(void * dir_address, char * name);
-int get_max_occurrences(char* name, char separator);
+int get_max_occurrences(char* name, char *separator);
 
 #ifdef ZENITH_IMPLEMENTATION
 
-void* create_partition(void * memory_chunk_head, size_t size){
+void* create_partition(size_t size){
     int page_count = size/sizeof(zenith_folder);
     int allocated_page[page_count];
     void * page_pointer[page_count];
-    struct zenith_root_map zenith_root;
+    zenith_root_map zenith_root;
     size_t base_sturct_size = sizeof(zenith_root_map);
     char * name = "/";
-    int free_size = sizeof(size_t)*(size-base_sturct_size);
+    int free_size = sizeof(char)*(size-base_sturct_size);
 
     mem_size = size;
     map_size = base_sturct_size;
     general_page_count = page_count;
 
-    memory_chunk_head = (void*)malloc(sizeof(size_t)*size);
+    void *memory_chunk_head = (void*)malloc(sizeof(size_t)*size);
 
     for(int i=0;i<page_count;i++){
         allocated_page[i] = 0;
@@ -126,30 +126,31 @@ void* create_partition(void * memory_chunk_head, size_t size){
     zenith_root.xlb_free_m = 0x00;
     zenith_root.xlb_free_m = 0x00;
 
-    memcpy(memory_chunk_head, zenith_root, base_sturct_size);
+    memcpy(memory_chunk_head, &zenith_root, base_sturct_size);
 
     if(
-        zenith_mkdir(memory_chunk_head, "usr", "/") &&
-        zenith_mkdir(memory_chunk_head, "share", "/") &&
-        zenith_mkdir(memory_chunk_head, "bin", "/") &&
-        zenith_mkdir(memory_chunk_head, "home", "/") &&
-        zenith_mkdir(memory_chunk_head, "etc", "/")){
+        zenith_mkdir(memory_chunk_head, "usr","/" ,"/") &&
+        zenith_mkdir(memory_chunk_head, "share","/", "/") &&
+        zenith_mkdir(memory_chunk_head, "bin","/", "/") &&
+        zenith_mkdir(memory_chunk_head, "home","/", "/") &&
+        zenith_mkdir(memory_chunk_head, "etc","/", "/")){
 
         return memory_chunk_head;
     }
-    return null;
+    return NULL;
 }
 
 
 int zenith_mkdir(void * memory_chunk_head, char * name, char * current_pos,char * path){
     int occurrences = 0;
-    struct zenith_root_map map_copy;
-    memcpy(map_copy, memory_chunk_head, map_size);
+    zenith_root_map map_copy;
+    memcpy(&map_copy, memory_chunk_head, map_size);
 
-    struct zenith_folder folder;
-    zenith_folder* address = (zenith_folder*)zenith_get_address();
-    zenith_folder* dir_address = zenith_cd(current_pos, path);
-    memcpy(address,folder, sizeof(zenith_folder));
+    zenith_folder folder;
+    zenith_folder* address = (zenith_folder*)zenith_get_free_address(memory_chunk_head);
+    zenith_folder* dir_address = zenith_cd(memory_chunk_head,current_pos, path);
+
+    memcpy(address,&folder, sizeof(zenith_folder));
     strcpy(address->name, name);
 
 
@@ -157,28 +158,28 @@ int zenith_mkdir(void * memory_chunk_head, char * name, char * current_pos,char 
         return FALSE;
     }
 
-    if(strcmp(name, dir_address->folder_0->name) == FALSE){
+    if(strcmp(name, dir_address->folder_0.name) == FALSE){
         occurrences+=1;
     }
-    if(strcmp(name, dir_address->folder_1->name) == FALSE){
+    if(strcmp(name, dir_address->folder_1.name) == FALSE){
         occurrences+=1;
     }
-    if(strcmp(name, dir_address->folder_2->name) == FALSE){
+    if(strcmp(name, dir_address->folder_2.name) == FALSE){
         occurrences+=1;
     }
-    if(strcmp(name, dir_address->folder_3->name) == FALSE){
+    if(strcmp(name, dir_address->folder_3.name) == FALSE){
         occurrences+=1;
     }
-    if(strcmp(name, dir_address->folder_4->name) == FALSE){
+    if(strcmp(name, dir_address->folder_4.name) == FALSE){
         occurrences+=1;
     }
-    if(strcmp(name, dir_address->folder_5->name) == FALSE){
+    if(strcmp(name, dir_address->folder_5.name) == FALSE){
         occurrences+=1;
     }
-    if(strcmp(name, dir_address->folder_6->name) == FALSE){
+    if(strcmp(name, dir_address->folder_6.name) == FALSE){
         occurrences+=1;
     }
-    if(strcmp(name, dir_address->folder_7->name) == FALSE){
+    if(strcmp(name, dir_address->folder_7.name) == FALSE){
         occurrences+=1;
     }
 
@@ -211,17 +212,16 @@ int zenith_mkdir(void * memory_chunk_head, char * name, char * current_pos,char 
         return FALSE;
     }
 
-    return true;
+    return TRUE;
 }
 
-void* zenith_cd(char * current_pos, char* path){
+void* zenith_cd(void *memory_chunk_head,char * current_pos, char* path){
 
-    int struct_size = sizef(zenith_root_map);
-    struct zenith_root_map map_copy;
-    memcpy(map_copy, memory_chunk_head, zenith_root_map);
+    zenith_root_map map_copy;
+    memcpy(&map_copy, memory_chunk_head, map_size);
 
     if(strlen(path) == 1){
-        return NULL;
+        return memory_chunk_head;
     }else{
         char * name = get_name_from_path(path, 1, "/");
         int it = 1;
@@ -236,9 +236,9 @@ void* zenith_cd(char * current_pos, char* path){
 
 }
 
-void* zenith_get_free_address(){
-    struct zenith_root_map map_copy;
-    memcpy(map_copy, memory_chunk_head, map_size);
+void* zenith_get_free_address(void* memory_chunk_head){
+    zenith_root_map map_copy;
+    memcpy(&map_copy, memory_chunk_head, map_size);
     void * pointer;
 
     for(int i=0;i<general_page_count;i++){
@@ -251,7 +251,7 @@ void* zenith_get_free_address(){
 }
 
 
-char* get_name_from_path(char*path, int iteration_number, char separator){
+char* get_name_from_path(char*path, int iteration_number, char *separator){
     char name[16];
     int pos = 0;
 
@@ -282,37 +282,37 @@ char* get_name_from_path(char*path, int iteration_number, char separator){
 
 void* compare_dir_name(void * dir_address, char * name){
     void * obtained_address = NULL;
-    if(strcmp(name, dir_address->folder_0->name) == FALSE){
+    if(strcmp(name, dir_address->folder_0.name) == FALSE){
         obtained_address = dir_address->folder_0;
     }
-    if(strcmp(name, dir_address->folder_1->name) == FALSE){
+    if(strcmp(name, dir_address->folder_1.name) == FALSE){
         obtained_address = dir_address->folder_1;
     }
-    if(strcmp(name, dir_address->folder_2->name) == FALSE){
+    if(strcmp(name, dir_address->folder_2.name) == FALSE){
         obtained_address = dir_address->folder_2;
     }
-    if(strcmp(name, dir_address->folder_3->name) == FALSE){
+    if(strcmp(name, dir_address->folder_3.name) == FALSE){
         obtained_address = dir_address->folder_3;
     }
-    if(strcmp(name, dir_address->folder_4->name) == FALSE){
+    if(strcmp(name, dir_address->folder_4.name) == FALSE){
         obtained_address = dir_address->folder_4;
     }
-    if(strcmp(name, dir_address->folder_5->name) == FALSE){
+    if(strcmp(name, dir_address->folder_5.name) == FALSE){
         obtained_address = dir_address->folder_5;
     }
-    if(strcmp(name, dir_address->folder_6->name) == FALSE){
+    if(strcmp(name, dir_address->folder_6.name) == FALSE){
         obtained_address = dir_address->folder_6;
     }
-    if(strcmp(name, dir_address->folder_7->name) == FALSE){
+    if(strcmp(name, dir_address->folder_7.name) == FALSE){
         obtained_address = dir_address->folder_7;
     }
     return obtained_address;
 }
 
-int get_max_occurrences(char* name, char separator){
+int get_max_occurrences(char* name, char *separator){
     int max_occurrences = 0;
 
-    if(path[0] != "/"){
+    if(name[0] != "/"){
         max_occurrences+=1;
     }
     for(int i=0;i<strlen(name);i++){
