@@ -8,7 +8,7 @@ K_MODULE_PRIORITY_LIST_HEAD=$0201
 K_MODULE_PRIORITY_LIST_END=$02ff
 
 
-K_MODULE_NUMBER_ON_BOOT=$06
+K_MODULE_NUMBER_ON_BOOT=$05
 
 
  .org $00
@@ -58,14 +58,6 @@ boot:
     sta K_MODULE_PRIORITY_LIST_HEAD,x
     inx
 
-    ; initialize serial port
-
-    lda #<__serial_init
-    sta K_MODULE_PRIORITY_LIST_HEAD,x
-    inx
-    lda #>__serial_init
-    sta K_MODULE_PRIORITY_LIST_HEAD,x
-    inx
 
     ; i2c initialization
 
@@ -107,7 +99,6 @@ boot:
  include "./driver/fx_card.s"
  include "./driver/keyboard.s"
  include "./driver/sd.s"
- include "./driver/serial.s"
  include "./driver/i2c.s"
 
 ; program and ui
