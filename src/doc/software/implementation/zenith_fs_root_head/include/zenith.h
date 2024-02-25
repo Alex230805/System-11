@@ -23,28 +23,28 @@ typedef struct znode{
 
 typedef struct zfolder{
     char name[9];
-    struct zenith_folder* folder_0;                // node -> may be just a file or other folder
-    struct zenith_folder * folder_1;
-    struct zenith_folder * folder_2;
-    struct zenith_folder * folder_3;
-    struct zenith_folder * folder_4;
-    struct zenith_folder * folder_5;
-    struct zenith_folder * folder_6;
-    struct zenith_folder * folder_7;
+    struct zfolder* folder_0;                // node -> may be just a file or other folder
+    struct zfolder * folder_1;
+    struct zfolder * folder_2;
+    struct zfolder * folder_3;
+    struct zfolder * folder_4;
+    struct zfolder * folder_5;
+    struct zfolder * folder_6;
+    struct zfolder * folder_7;
 }zenith_folder; 
 
 
 typedef struct {
     char name[9];
     uint8_t enable_flag;
-    struct zenith_folder *folder_0;
-    struct zenith_folder *folder_1;
-    struct zenith_folder *folder_2;
-    struct zenith_folder *folder_3;
-    struct zenith_folder *folder_4;
-    struct zenith_folder *folder_5;
-    struct zenith_folder *folder_6;
-    struct zenith_folder *folder_7;
+    zenith_folder *folder_0;
+    zenith_folder *folder_1;
+    zenith_folder *folder_2;
+    zenith_folder *folder_3;
+    zenith_folder *folder_4;
+    zenith_folder *folder_5;
+    zenith_folder *folder_6;
+    zenith_folder *folder_7;
     uint8_t lb_free_m;
     uint8_t hb_free_m;
     uint8_t xlb_free_m;
@@ -97,14 +97,14 @@ void* create_partition(size_t size){
     zenith_root.allocated_page = allocated_page;
     zenith_root.page_pointer = page_pointer;
 
-    zenith_root.folder_0 = (zenith_folder)page_pointer[16];
-    zenith_root.folder_1 = (zenith_folder)page_pointer[17];
-    zenith_root.folder_2 = (zenith_folder)page_pointer[18];
-    zenith_root.folder_3 = (zenith_folder)page_pointer[19];
-    zenith_root.folder_4 = (zenith_folder)page_pointer[20];
-    zenith_root.folder_5 = (zenith_folder)page_pointer[21];
-    zenith_root.folder_6 = (zenith_folder)page_pointer[22];
-    zenith_root.folder_7 = (zenith_folder)page_pointer[23];
+    zenith_root.folder_0 = (zenith_folder*)&page_pointer[16];
+    zenith_root.folder_1 = (zenith_folder*)&page_pointer[17];
+    zenith_root.folder_2 = (zenith_folder*)&page_pointer[18];
+    zenith_root.folder_3 = (zenith_folder*)&page_pointer[19];
+    zenith_root.folder_4 = (zenith_folder*)&page_pointer[20];
+    zenith_root.folder_5 = (zenith_folder*)&page_pointer[21];
+    zenith_root.folder_6 = (zenith_folder*)&page_pointer[22];
+    zenith_root.folder_7 = (zenith_folder*)&page_pointer[23];
 
 
     allocated_page[16] = 0xff;
@@ -126,7 +126,7 @@ void* create_partition(size_t size){
     zenith_root.xlb_free_m = 0x00;
     zenith_root.xlb_free_m = 0x00;
 
-    memcpy(memory_chunk_head, &zenith_root, base_sturct_size);
+    memcpy(memory_chunk_head, &zenith_root, base_struct_size);
 
     if(
         zenith_mkdir(memory_chunk_head, "usr","/" ,"/") &&
@@ -148,7 +148,7 @@ int zenith_mkdir(void * memory_chunk_head, char * name, char * current_pos,char 
 
     zenith_folder folder;
     zenith_folder* address = (zenith_folder*)zenith_get_free_address(memory_chunk_head);
-    zenith_folder* dir_address = zenith_cd(memory_chunk_head,current_pos, path);
+    void* dir_address = zenith_cd(memory_chunk_head,current_pos, path);
    
     strcpy(address->name, name);
     address->folder_0 = NULL;
@@ -166,28 +166,28 @@ int zenith_mkdir(void * memory_chunk_head, char * name, char * current_pos,char 
 
     memcpy(address,&folder, sizeof(zenith_folder));
 	
-    if(strcmp(name, dir_address->folder_0.name) == FALSE){
+    if(strcmp(name, &dir_address->folder_0->name) == FALSE){
         occurrences+=1;
     }
-    if(strcmp(name, dir_address->folder_1.name) == FALSE){
+    if(strcmp(name, &dir_address->folder_1->name) == FALSE){
         occurrences+=1;
     }
-    if(strcmp(name, dir_address->folder_2.name) == FALSE){
+    if(strcmp(name, &dir_address->folder_2->name) == FALSE){
         occurrences+=1;
     }
-    if(strcmp(name, dir_address->folder_3.name) == FALSE){
+    if(strcmp(name, &dir_address->folder_3->name) == FALSE){
         occurrences+=1;
     }
-    if(strcmp(name, dir_address->folder_4.name) == FALSE){
+    if(strcmp(name, &dir_address->folder_4->name) == FALSE){
         occurrences+=1;
     }
-    if(strcmp(name, dir_address->folder_5.name) == FALSE){
+    if(strcmp(name, &dir_address->folder_5->name) == FALSE){
         occurrences+=1;
     }
-    if(strcmp(name, dir_address->folder_6.name) == FALSE){
+    if(strcmp(name, &dir_address->folder_6->name) == FALSE){
         occurrences+=1;
     }
-    if(strcmp(name, dir_address->folder_7.name) == FALSE){
+    if(strcmp(name, &dir_address->folder_7->name) == FALSE){
         occurrences+=1;
     }
 
@@ -251,8 +251,8 @@ void* zenith_get_free_address(void* memory_chunk_head){
     void * pointer;
 
     for(int i=0;i<general_page_count;i++){
-        if(map_copy.allocated_page[i] == 0){
-            pointer = map_copy.page_pointer[i];
+        if(map_copy.allocated_page[i] == 0x00){
+            pointer = &map_copy.page_pointer[i];
             map_copy.allocated_page[i] = 0xff;
         }
     }
@@ -291,29 +291,29 @@ char* get_name_from_path(char*path, int iteration_number, char *separator){
 
 void* compare_dir_name(void * dir_address, char * name){
     void * obtained_address = NULL;
-    if(strcmp(name, dir_address->folder_0.name) == FALSE){
-        obtained_address = dir_address->folder_0;
+    if(strcmp(name, &dir_address->folder_0->name) == FALSE){
+        obtained_address = &dir_address->folder_0;
     }
-    if(strcmp(name, dir_address->folder_1.name) == FALSE){
-        obtained_address = dir_address->folder_1;
+    if(strcmp(name, &dir_address->folder_1->name) == FALSE){
+        obtained_address = &dir_address->folder_1;
     }
-    if(strcmp(name, dir_address->folder_2.name) == FALSE){
-        obtained_address = dir_address->folder_2;
+    if(strcmp(name, &dir_address->folder_2->name) == FALSE){
+        obtained_address = &dir_address->folder_2;
     }
-    if(strcmp(name, dir_address->folder_3.name) == FALSE){
-        obtained_address = dir_address->folder_3;
+    if(strcmp(name, &dir_address->folder_3->name) == FALSE){
+        obtained_address = &dir_address->folder_3;
     }
-    if(strcmp(name, dir_address->folder_4.name) == FALSE){
-        obtained_address = dir_address->folder_4;
+    if(strcmp(name, &dir_address->folder_4->name) == FALSE){
+        obtained_address = &dir_address->folder_4;
     }
-    if(strcmp(name, dir_address->folder_5.name) == FALSE){
-        obtained_address = dir_address->folder_5;
+    if(strcmp(name, &dir_address->folder_5->name) == FALSE){
+        obtained_address = &dir_address->folder_5;
     }
-    if(strcmp(name, dir_address->folder_6.name) == FALSE){
-        obtained_address = dir_address->folder_6;
+    if(strcmp(name, &dir_address->folder_6->name) == FALSE){
+        obtained_address = &dir_address->folder_6;
     }
-    if(strcmp(name, dir_address->folder_7.name) == FALSE){
-        obtained_address = dir_address->folder_7;
+    if(strcmp(name, &dir_address->folder_7->name) == FALSE){
+        obtained_address = &dir_address->folder_7;
     }
     return obtained_address;
 }
