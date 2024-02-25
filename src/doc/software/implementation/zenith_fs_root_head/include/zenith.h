@@ -76,12 +76,12 @@ void* create_partition(size_t size){
     int allocated_page[page_count];
     void * page_pointer[page_count];
     zenith_root_map zenith_root;
-    size_t base_sturct_size = sizeof(zenith_root_map);
+    size_t base_struct_size = sizeof(zenith_root_map);
     char * name = "/";
-    int free_size = sizeof(char)*(size-base_sturct_size);
+    int free_size = sizeof(char)*(size-base_struct_size);
 
     mem_size = size;
-    map_size = base_sturct_size;
+    map_size = base_struct_size;
     general_page_count = page_count;
 
     void *memory_chunk_head = (void*)malloc(sizeof(size_t)*size);
@@ -149,15 +149,23 @@ int zenith_mkdir(void * memory_chunk_head, char * name, char * current_pos,char 
     zenith_folder folder;
     zenith_folder* address = (zenith_folder*)zenith_get_free_address(memory_chunk_head);
     zenith_folder* dir_address = zenith_cd(memory_chunk_head,current_pos, path);
-
-    memcpy(address,&folder, sizeof(zenith_folder));
+   
     strcpy(address->name, name);
+    address->folder_0 = NULL;
+    address->folder_1 = NULL; 
+    address->folder_2 = NULL; 
+    address->folder_3 = NULL;
+    address->folder_4 = NULL;
+    address->folder_5 = NULL;
+    address->folder_6 = NULL;
+    address->folder_7 = NULL;
 
-
-    if(dir_address == NULL){
-        return FALSE;
+    if(dir_address == memory_chunk_head){
+        dir_address = &map_copy;
     }
 
+    memcpy(address,&folder, sizeof(zenith_folder));
+	
     if(strcmp(name, dir_address->folder_0.name) == FALSE){
         occurrences+=1;
     }
@@ -211,6 +219,7 @@ int zenith_mkdir(void * memory_chunk_head, char * name, char * current_pos,char 
     if(occurrences > 0){
         return FALSE;
     }
+    memcpy(memory_chunk_head, dir_address, sizeof(char)*(map_size));
 
     return TRUE;
 }
