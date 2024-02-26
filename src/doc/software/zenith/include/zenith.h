@@ -5,18 +5,19 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <stdint.h>
 
 #define MAX_CAPACITY 256
 
-#define __Z_DEFAULT_USER_PERM__ 0b10000000;
-#define __Z_USER_READ_PERM__ 0b100000001;
-#define __Z_USER_WRITE_PERM__ 0b10000010;
-#define __Z_USER_EXECUTE_PERM__ 0b1000100;
+#define __Z_DEFAULT_USER_PERM__ 0b10000000
+#define __Z_USER_READ_PERM__ 0b100000001
+#define __Z_USER_WRITE_PERM__ 0b10000010
+#define __Z_USER_EXECUTE_PERM__ 0b1000100
 
-#define __Z_SUPER_PERM__ 0b10000000;
-#define __Z_SUPER_WRITE_PERM__ 0b10001000;
-#define __Z_SUPER_READ_PERM__ 0b10010000;
-#define __Z_SUPER_EXECUTE_PERM__ 0b11000000;
+#define __Z_SUPER_PERM__ 0b10000000
+#define __Z_SUPER_WRITE_PERM__ 0b10001000
+#define __Z_SUPER_READ_PERM__ 0b10010000
+#define __Z_SUPER_EXECUTE_PERM__ 0b11000000
 
 
 
@@ -28,7 +29,7 @@
 #define __ZENITH_FOLDER___ 0x80
 
 
-#define __ZENITH_INIT_COMPLETE__ 0xAF;
+#define __ZENITH_INIT_COMPLETE__ 0xAF
 
 typedef struct z_folder{
     struct z_folder* next;   // next concatenated folder -> all part of the same node 
@@ -165,9 +166,8 @@ void init_folder(z_folder * folder){
 #ifdef ZENITH_MKFS_IMPLEMENTATION
 
 int zenith_init_fs(int size){
-
-    drive_space = (uint8_t*)malloc(sizeof(uint8_t) * size);     // define a space
-    memcpy(drive_space,NULL,sizeof(uint8_t) * size);            // initialize it
+    drive_space = (uint8_t*)malloc(sizeof(uint8_t)*size);     // define a space
+    memcpy(drive_space,NULL,sizeof(uint8_t)*size);            // initialize it
 
     root fs_table;                                  // create fs table
 
