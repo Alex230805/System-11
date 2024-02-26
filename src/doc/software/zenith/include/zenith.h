@@ -7,7 +7,7 @@
 #include <string.h>
 #include <stdint.h>
 
-#define MAX_CAPACITY 256
+#define MAX_CAPACITY 4096
 
 #define __Z_DEFAULT_USER_PERM__ 0b10000000
 #define __Z_USER_READ_PERM__ 0b100000001
@@ -31,23 +31,26 @@
 
 #define __ZENITH_INIT_COMPLETE__ 0xAF
 
+#define FALSE 0
+#define TRUE 1
+
 typedef struct z_folder{
     struct z_folder* next;   // next concatenated folder -> all part of the same node 
     void * node;            // the pointer data of the folder inside content
 }z_folder;
 
 typedef struct data_node{
-    uint8_t user_perm;
-    char name[8];
+    int user_perm;
+    char name[16];
     uint8_t data_array[240];
     struct data_node* next_node;
     struct data_node* contiguous_data;
-    uint8_t contiguous_flag;          // have next flag
+    int contiguous_flag;          // have next flag
 }data_node;
 
 typedef struct zenith_node{
-    uint8_t user_perm;      // user perm
-    char name[8];          // node name
+    int user_perm;      // user perm
+    char name[16];          // node name
     z_folder * folder;      // folder pointer list
     data_node * data;    // data poitner list
     struct zenith_node * prev;     // previous node
@@ -55,16 +58,18 @@ typedef struct zenith_node{
 
 typedef struct{
     char version_name[8];       // version name 
-    uint8_t total_size;             // total size ( in Bytes)
-    uint8_t free_pages;             // free pages (page = 256b)
-    uint8_t used_space;
+    int total_size;             // total size ( in Bytes)
+    int free_pages;             // free pages (page = 256b)
+    int used_space;
     zenith_node * first_node;   // first node pointer
     void *page_pointer[MAX_CAPACITY];   // pointer to page
-    uint8_t page_allocated[MAX_CAPACITY];   // page flag 
+    int page_allocated[MAX_CAPACITY];   // page flag 
 }root;
 
 
-uint8_t * drive_space;           // drive space to simulate
+uint8_t* drive_space;           // drive space to simulate
+int global_root_size;
+
 
 int zenith_init_fs(int size);
 void* zenith_malloc(root * fs_tab,uint8_t type, int user_type);
@@ -98,11 +103,15 @@ void* zenith_malloc(root * fs_tab,uint8_t type, int user_type){
             break;
 
         case __ZENITH_DATA_NODE__:
-            init_data_node(&data, "new_file", user_type);
+            init_data_node(&data, "file", user_type);
             while(fs_tab->page_allocated[i] != 0x00){
                 i++;
             }
-            dim = sizeof(data_node);
+            dim = (int)sizeof(data_node)/256;
+            float extra_dim = (sizeof(data_node)/256 - dim)*10;
+            if(extra_dim > 0){
+                dim+=1;
+            }
             pointer = (void*)fs_tab->page_pointer[i];
             memcpy(pointer, &data, dim);
             break;
@@ -153,7 +162,7 @@ void init_data_node(data_node * data, char * name, int type){
     strcpy(data->name,name);
     data->next_node = NULL;
     data->contiguous_data = NULL;
-    data->contiguous_flag = 0x00;
+    data->contiguous_flag = 0X00;
     return;
 }
 
@@ -167,34 +176,34 @@ void init_folder(z_folder * folder){
 
 int zenith_init_fs(int size){
     drive_space = (uint8_t*)malloc(sizeof(uint8_t)*size);     // define a space
-    memcpy(drive_space,NULL,sizeof(uint8_t)*size);            // initialize it
-
+    for(int i=0;i<size;i++){
+        drive_space[i] = "\0";
+    }
     root fs_table;                                  // create fs table
 
     strcpy(fs_table.version_name,"zth_1.0");      // copy name
     fs_table.total_size = size;                     // write size
-    fs_table.free_pages = size/8;                   // write free pages
+    fs_table.free_pages = size/256;                   // write free pages
     fs_table.used_space = 0;
     fs_table.first_node = NULL;                     // link first node to NULL
 
     // copy address for pages
     int j = 0;
-    for(int i=0;i<size;i++){                       
+    for(int i=0;i<MAX_CAPACITY;i++){                       
         fs_table.page_pointer[i] = &drive_space[j];
         j+=256;
     }
 
     // set flags to 0
-    for(int i=0;i<size;i++){
-        fs_table.page_allocated[i] = 0x00;
+    for(int i=0;i<MAX_CAPACITY;i++){
+        fs_table.page_allocated[i] = FALSE;
     }
 
-    int root_size = 0;
-    int root_size_page = (int)sizeof(root) / 256*10 % 10;   // amount of pages used by the fs tab
-    if(root_size_page > 0){
+    int root_size = (int)sizeof(root)/256;
+    float extra_page_root_size = (sizeof(root)/256 - root_size)*10;
+    if(extra_page_root_size > 0){
         root_size+=1;
     }
-    root_size += sizeof(root) /256;
 
     for(int i=0;i<root_size;i++){
         fs_table.page_allocated[i] = 0xff;
@@ -204,8 +213,14 @@ int zenith_init_fs(int size){
     z_folder * folder = (z_folder*)zenith_malloc(&fs_table,__ZENITH_FOLDER___,__SUPER_USER__);
 
     node->folder = folder;
+    fs_table.first_node = node;
     strcpy(node->name,"/");
-    memcpy(drive_space,&fs_table,sizeof(root));
+
+    fs_table.free_pages = fs_table.free_pages - root_size - 2;
+    fs_table.used_space = root_size + 2;
+    
+    memcpy(drive_space,&fs_table,root_size*256);
+    global_root_size = root_size*256;
 
     return __ZENITH_INIT_COMPLETE__;
 }
