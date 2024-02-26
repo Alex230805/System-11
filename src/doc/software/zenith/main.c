@@ -30,13 +30,13 @@ int main(void){
     }
     root fs_tab;
     memcpy(&fs_tab, drive_space, sizeof(root));
-    printf("========== ZENITH FS TEST FS TAB ===========\n\n");
+    printf("\n========== ZENITH FS TEST FS TAB ===========\n\n");
     printf("Zenith version: %s\n", fs_tab.version_name);
     printf("Root name: %s\n", fs_tab.first_node->name);
     printf("Partition size (bytes): %d\n", fs_tab.total_size);
     printf("Partition free pages: %d\n", fs_tab.free_pages);
     printf("Partition used space: %d\n", fs_tab.used_space);
-    printf("User perm: %d\n", fs_tab.first_node->user_perm);
+    printf("User perm: %d\n\n", fs_tab.first_node->user_perm);
     printf("===========================================\n\n");
     free(drive_space);
     drive_space = NULL;
