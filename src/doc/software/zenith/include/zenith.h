@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdarg.h>
 
 #define MAX_CAPACITY 4096
 
@@ -30,9 +31,39 @@
 
 
 #define __ZENITH_INIT_COMPLETE__ 0xAF
+#define __ZENITH_LOW_LEVEL_SWAP__ 0xBE
 
 #define FALSE 0
 #define TRUE 1
+
+
+
+/**
+
+#define ZENITH_IMPLEMENTATION
+
+    - init_node fn
+    - init_data_node fn
+    - init_folder fn
+    - zenith_malloc fn
+    - zenith_flush_fstab fn
+
+#define ZENITH_MKFS_IMPLEMENTATION
+
+    - zenith_init_fs fn
+    - zenith_init_root_dir fn
+
+Zenith init with low level swap:
+
+Include the argument "__ZENITH_LOW_LEVEL_SWAP__" in zenith_init_fs function
+to erase all data in the phisical drive
+
+zenith_init_fs(dim,__ZENITH_LOW_LEVEL_SWAP__) -> overwrite all data with 0 and generate partition table
+zenith_init_fs(dim) -> generate partition table
+
+
+**/
+
 
 typedef struct z_folder{
     struct z_folder* next;   // next concatenated folder -> all part of the same node 
@@ -71,11 +102,12 @@ uint8_t* drive_space;           // drive space to simulate
 int global_root_size;
 
 
-int zenith_init_fs(int size);
+int zenith_init_fs(int size, ...);
 void* zenith_malloc(root * fs_tab,uint8_t type, int user_type);
 void init_node(zenith_node * node, char * name, int type);
 void init_data_node(data_node * data, char * name, int type);
 void init_folder(z_folder * folder);
+void zenith_flush_fstab(root*fstab, int size);
 
 #ifdef ZENITH_IMPLEMENTATION
 
@@ -172,13 +204,29 @@ void init_folder(z_folder * folder){
     return;
 }
 
+
+void zenith_flush_fstab(root * fs_tab, int size){
+    memcpy(drive_space, fs_tab, size);
+    return;
+}
+
 #ifdef ZENITH_MKFS_IMPLEMENTATION
 
-int zenith_init_fs(int size){
+int zenith_init_fs(int size, ...){
     drive_space = (uint8_t*)malloc(sizeof(uint8_t)*size);     // define a space
-    for(int i=0;i<size;i++){
-        drive_space[i] = "\0";
+    va_list ptr;
+
+    va_start(ptr,3);
+
+    for(int i=0;i<3;i++){
+        if(va_arg(ptr,int) == __ZENITH_LOW_LEVEL_SWAP__){
+            printf("\nDeep swap!\n");
+            memset(drive_space,0, size);
+        }
     }
+
+    va_end(ptr);
+
     root fs_table;                                  // create fs table
 
     strcpy(fs_table.version_name,"zth_1.0");      // copy name
@@ -208,7 +256,8 @@ int zenith_init_fs(int size){
     for(int i=0;i<root_size;i++){
         fs_table.page_allocated[i] = 0xff;
     }
-    
+    global_root_size = root_size*256;
+
     zenith_node * node = (zenith_node*)zenith_malloc(&fs_table,__ZENITH_NODE__,__SUPER_USER__);
     z_folder * folder = (z_folder*)zenith_malloc(&fs_table,__ZENITH_FOLDER___,__SUPER_USER__);
 
@@ -218,9 +267,9 @@ int zenith_init_fs(int size){
 
     fs_table.free_pages = fs_table.free_pages - root_size - 2;
     fs_table.used_space = root_size + 2;
+
+    zenith_flush_fstab(&fs_table, global_root_size);
     
-    memcpy(drive_space,&fs_table,root_size*256);
-    global_root_size = root_size*256;
 
     return __ZENITH_INIT_COMPLETE__;
 }

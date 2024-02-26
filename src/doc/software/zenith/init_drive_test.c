@@ -1,21 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/**
-
-#define ZENITH_IMPLEMENTATION
-
-    - init_node fn
-    - init_data_node fn
-    - init_folder fn
-    - zenith malloc fn
-
-#define ZENITH_MKFS_IMPLEMENTATION
-
-    - zenith_init_fs fn
-    - zenith_init_root_dir fn
-
-**/
 #define ZENITH_IMPLEMENTATION
 #define ZENITH_MKFS_IMPLEMENTATION
 
