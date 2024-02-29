@@ -17,24 +17,25 @@ int main(void){
     }
     root fs_tab;
     memcpy(&fs_tab, drive_space, sizeof(root));
-    zenith_init_root_dir(&fs_tab);
-    printf("\n========== ZENITH FS TEST FS TAB ===========\n\n");
-    printf("Zenith version: %s\n", fs_tab.version_name);
-    printf("Root name: %s\n", fs_tab.first_node->name);
-    printf("Partition size (bytes): %d\n", fs_tab.total_size);
-    printf("Partition free pages: %d\n", fs_tab.free_pages);
-    printf("Partition used space: %d\n", fs_tab.used_space);
-    printf("User perm: %d\n\n", fs_tab.first_node->user_perm);
-    printf("Root content: \n");
+    zenith_print_volume_information(&fs_tab);
 
-    z_folder * folder = fs_tab.first_node->folder;
-    while(folder->next != NULL){
-        zenith_node * nn = (zenith_node*)folder->node;
-        printf("%s\n",nn->name);
-        folder = folder->next;
-    }
+
+    zenith_mkdir(&fs_tab, "am", __USER__, "home");
+    zenith_mkdir(&fs_tab, "desktop", __USER__,"home/am");
+    zenith_mkdir(&fs_tab, "documents", __USER__,"home/am");
+    zenith_mkdir(&fs_tab, "downloads", __USER__,"home/am");
+    zenith_mkdir(&fs_tab, "images", __USER__,"home/am");
+    zenith_mkdir(&fs_tab, "other", __USER__,"home/am");
+
+    zenith_show_folder_cont(&fs_tab, "/");   
+    zenith_show_folder_cont(&fs_tab, "/home");
+    zenith_show_folder_cont(&fs_tab, "/am");
+    zenith_show_folder_cont(&fs_tab, "/home/am");
+
+    zenith_print_volume_information(&fs_tab);
+    zenith_mkdir(&fs_tab, "other", __USER__,"home/am/poppo");
+    zenith_print_volume_information(&fs_tab);
     
-    printf("===========================================\n\n");
     free(drive_space);
     drive_space = NULL;
     return 0;
