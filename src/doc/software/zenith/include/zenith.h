@@ -43,6 +43,7 @@
 #define __ZENITH_FILE_NESTING_COMPLETE__ (__ZENITH_DATA_MASK__ | 0x00)
 #define __ZENITH_FILE_NAME_ERROR__ (__ZENITH_DATA_MASK__ | 0x01)
 #define __ZENITH_FILE_CREATION_FAILED__ (__ZENITH_DATA_MASK__ | 0x02)
+#define __ZENITH_FILE_LOADING_FAILED__ (__ZENITH_DATA_MASK__ | 0x03)
 
 #define FALSE 0
 #define TRUE 1
@@ -82,6 +83,11 @@ zenith_init_fs(dim) -> generate partition table
     - zenith_folder_navigate fn
     - zenith_mkdir fn
 
+#define ZENITH_NAVIGATOR_FILE_IMPLEMENTATION
+
+    - zenith_writef fn
+    - zenith_loadf fn
+
 
 
 **/
@@ -95,7 +101,7 @@ typedef struct z_folder{
 typedef struct data_node{
     int user_perm;
     char name[16];
-    char data_array[206];
+    uint8_t data_array[206];
     struct data_node* next_data;
     struct data_node* contiguous_data;
     int contiguous_flag;          // have next flag
@@ -139,7 +145,7 @@ void zenith_show_folder_cont(root*fs_tab, char * path);
 void* zenith_folder_navigate(root*fs_tab, char* path);
 void zenith_mkdir(root*fs_tab, char* path, char* name, int perm);
 int zenith_writef(root*fs_tab,uint8_t*f, char * path,char* name, int perm);
-
+uint8_t* zenith_loadf(root*fs_tab, char *path, char*name);
 
 #ifdef ZENITH_IMPLEMENTATION
 
@@ -469,33 +475,40 @@ int zenith_writef(root*fs_tab,uint8_t*f, char* path, char*name,int perm){
             int file_tracker = 0;
             d->contiguous_flag = 0xff;
             strcpy(d->name, name);
-
             int dyn_tracker = 0;
-            while(file_tracker < file_lenght  && dyn_tracker < 206){
-                memset(&d->data_array[file_tracker],f[file_tracker],1);
-                file_tracker+=1;
+            while(dyn_tracker < 206){
+                d->data_array[dyn_tracker] = f[file_tracker];
+                if(file_tracker == file_lenght){
+                    file_tracker = file_tracker;
+                }else{
+                    file_tracker+=1;
+                }
                 dyn_tracker+=1;
             }
 
-            data_node * d_header = d->contiguous_data;
-            data_node * c_data = NULL;
-
+            
+            data_node * d_header = NULL;
             for(int i=0;i<page_to_allocate; i++){
-                c_data = (data_node*)zenith_malloc(fs_tab, __ZENITH_DATA_NODE__, perm);
+                data_node * c_data = (data_node*)zenith_malloc(fs_tab, __ZENITH_DATA_NODE__, perm);
                 strcpy(c_data->name,"");
 
                 dyn_tracker = 0;
-                while(file_tracker < file_lenght && dyn_tracker < 206){
-                    memset(&c_data->data_array[file_tracker],f[file_tracker],1);
-                    file_tracker+=1;
+                while(dyn_tracker < 206){
+                    c_data->data_array[dyn_tracker] = f[file_tracker];
+                    if(file_tracker == file_lenght){
+                        file_tracker = file_tracker;
+                    }else{
+                        file_tracker+=1;
+                    }
                     dyn_tracker+=1;
                 }
 
                 if(d->contiguous_data != NULL){
                     d->contiguous_data->contiguous_data = c_data;
-                    d->contiguous_data = d->contiguous_data->contiguous_data;
+                    d->contiguous_data =  d->contiguous_data->contiguous_data;
                 }else{
                     d->contiguous_data = c_data;
+                    d_header = d->contiguous_data;
                 }
 
             }
@@ -528,6 +541,76 @@ int zenith_writef(root*fs_tab,uint8_t*f, char* path, char*name,int perm){
         return __ZENITH_FILE_NESTING_COMPLETE__;
     } 
     return __ZENITH_FILE_CREATION_FAILED__;
+}
+
+uint8_t* zenith_loadf(root*fs_tab, char *path, char*name){
+    uint8_t* out = NULL;
+    zenith_node * node = (zenith_node*)zenith_folder_navigate(fs_tab, path);
+    
+    data_node* file_p = NULL;
+    if(node->data != NULL){
+        while(node->data!=NULL){
+            if(strcmp(node->data->name, name) == 0){
+                file_p = node->data;
+            }
+            node->data = node->data->next_data;
+        }
+    }else{
+        return NULL;
+    }
+    if(file_p == NULL){
+        return NULL;
+    }
+
+    if(file_p->contiguous_flag == 0xFF){
+        data_node * h_data = file_p->contiguous_data;
+        int size = 0;
+        while(file_p->contiguous_data != NULL){
+            size++;
+            file_p->contiguous_data = file_p->contiguous_data->contiguous_data;
+        }
+        file_p->contiguous_data = h_data;
+        int total_size = (size+1) * 206;
+        out = (uint8_t*)malloc(sizeof(uint8_t)*total_size);
+        
+        size = 0;
+        int dyn_pointer = 0;
+        while(dyn_pointer<206){
+            out[size] = file_p->data_array[dyn_pointer];
+            dyn_pointer+=1;
+            if(size == total_size-1){
+                size = size;
+            }else{
+                size+=1;
+            }
+        }
+
+        while(file_p->contiguous_data != NULL){
+            dyn_pointer = 0;
+            int lenght = strlen(file_p->contiguous_data->data_array);
+             while(dyn_pointer<206){
+                out[size] = file_p->contiguous_data->data_array[dyn_pointer];
+                dyn_pointer+=1;
+                if(size == total_size-1){
+                    size = size;
+                }else{
+                    size+=1;
+                }
+            }
+            file_p->contiguous_data = file_p->contiguous_data->contiguous_data;
+        }
+        out[size+1] = "\0";
+        return out;
+    }
+    out = (uint8_t*)malloc(sizeof(uint8_t)*206);
+    int size = 0;
+    int lenght = strlen(file_p->data_array);
+    while(size<lenght){
+        out[size] = file_p->data_array[size];
+        size+=1;
+    }
+    out[size+1] = "\0";
+    return out;
 }
 
 #endif
@@ -597,10 +680,10 @@ void zenith_print_volume_information(root*fs_tab){
     printf("\n\nZ-System Volume Information\n\n");
     printf("Zenith version: %s\n", fs_tab->version_name);
     printf("Root name: %s\n", fs_tab->first_node->name);
-    printf("Partition size (bytes): %d\n", fs_tab->total_size);
-    printf("Partition free pages: %d\n", fs_tab->free_pages);
-    printf("Partition used space: %d\n", fs_tab->used_space);
-    printf("User perm: %d\n", fs_tab->first_node->user_perm);
+    printf("Partition size (Kbytes): %d kb\n", (fs_tab->total_size)/1024);
+    printf("Partition free space (in Kbytes, not accurate): %d kb\n", (int)(fs_tab->free_pages*256)/1024);
+    printf("Partition used space (int Kbytes, not accurate): %d kb\n", (int)(fs_tab->used_space*256)/1024);
+    printf("User perm: %d\n\n", fs_tab->first_node->user_perm);
 }
 
 

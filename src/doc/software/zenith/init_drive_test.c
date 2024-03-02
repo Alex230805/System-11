@@ -7,7 +7,7 @@
 
 #include "include/zenith.h"
 
-#define DIM 32768 
+#define DIM 1048576
 
 int main(void){
     if(zenith_init_fs(DIM) != __ZENITH_INIT_COMPLETE__){
