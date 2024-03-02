@@ -10,6 +10,12 @@
 
 #define MAX_CAPACITY 4096
 
+#define __ZENITH_MASK__ 0x00
+#define __ZENITH_USER_MASK__ 0x10
+#define __ZENITH_FOLDER_MASK__ 0x20
+#define __ZENITH_DATA_MASK__ 0x30
+#define __ZENITH_NODE_MASK__ 0x40
+
 #define __Z_DEFAULT_USER_PERM__ 0b10000000
 #define __Z_USER_READ_PERM__ 0b100000001
 #define __Z_USER_WRITE_PERM__ 0b10000010
@@ -20,18 +26,23 @@
 #define __Z_SUPER_READ_PERM__ 0b10010000
 #define __Z_SUPER_EXECUTE_PERM__ 0b11000000
 
-#define __SUPER_USER__ 0xF0
-#define __USER__ 0x0F
+#define __ZENITH_INIT_COMPLETE__ (__ZENITH_MASK__ | 0x00)
+#define __ZENITH_LOW_LEVEL_SWAP__ (__ZENITH_MASK__ | 0x01)
+
+#define __SUPER_USER__ (__ZENITH_USER_MASK__ | 0x0F)
+#define __USER__ (__ZENITH_USER_MASK__ | 0x00)
 
 #define __ZENITH_NODE__  0x20
 #define __ZENITH_DATA_NODE__ 0x40
 #define __ZENITH_FOLDER___ 0x80
 
+#define __ZENITH_FOLDER_NESTING_FAILED__ (__ZENITH_FOLDER_MASK__ | 0x00)
+#define __ZENITH_FOLDER_NESTING_FINISHED__ (__ZENITH_FOLDER_MASK__ | 0x01)
+#define __ZENITH_FOLDER_NAME_ERROR__ (__ZENITH_FOLDER_MASK__ | 0x02)
 
-#define __ZENITH_INIT_COMPLETE__ 0xAF
-#define __ZENITH_LOW_LEVEL_SWAP__ 0xBE
-#define __ZENITH_NESTING_FAILED__ 0xea
-#define __ZENITH_NESTING_FINISHED__ 0xde
+#define __ZENITH_FILE_NESTING_COMPLETE__ (__ZENITH_DATA_MASK__ | 0x00)
+#define __ZENITH_FILE_NAME_ERROR__ (__ZENITH_DATA_MASK__ | 0x01)
+#define __ZENITH_FILE_CREATION_FAILED__ (__ZENITH_DATA_MASK__ | 0x02)
 
 #define FALSE 0
 #define TRUE 1
@@ -84,8 +95,8 @@ typedef struct z_folder{
 typedef struct data_node{
     int user_perm;
     char name[16];
-    uint8_t data_array[235];
-    struct data_node* next_node;
+    char data_array[206];
+    struct data_node* next_data;
     struct data_node* contiguous_data;
     int contiguous_flag;          // have next flag
 }data_node;
@@ -112,33 +123,22 @@ uint8_t* drive_space;           // drive space to simulate
 int global_root_size;
 
 
-#ifdef ZENITH_IMPLEMENTATION
+void* zenith_malloc(root * fs_tab,uint8_t type, int user_type);
+void zenith_free(root*fs_tab, void * pointer);
+void init_node(zenith_node * node, char * name, int type);
+void init_data_node(data_node * data, char * name, int type);
+void init_folder(z_folder * folder);
+void zenith_flush_fstab(root*fstab, int size);
 
-    void* zenith_malloc(root * fs_tab,uint8_t type, int user_type);
-    void zenith_free(root*fs_tab, void * pointer);
-    void init_node(zenith_node * node, char * name, int type);
-    void init_data_node(data_node * data, char * name, int type);
-    void init_folder(z_folder * folder);
-    void zenith_flush_fstab(root*fstab, int size);
+int zenith_init_fs(int size, ...);
+void zenith_print_volume_information(root*fs_tab);
 
-#endif
-
-#ifdef ZENITH_MKFS_IMPLEMENTATION
-
-    int zenith_init_fs(int size, ...);
-    void zenith_print_volume_information(root*fs_tab);
-
-#endif
-
-#ifdef ZENITH_NAVIGATOR_IMPLEMENTATION
-
-    int zenith_insert_folder(root*fs_tab,char* path, z_folder * folder);
-    void zenith_init_root_dir(root * fs_tab);
-    void zenith_show_folder_cont(root*fs_tab, char * path);
-    void* zenith_folder_navigate(root*fs_tab, char* path);
-    void zenith_mkdir(root*fs_tab, char* name, int perm, char* path);
-
-#endif
+int zenith_insert_folder(root*fs_tab,char* path, z_folder * folder);
+void zenith_init_root_dir(root * fs_tab);
+void zenith_show_folder_cont(root*fs_tab, char * path);
+void* zenith_folder_navigate(root*fs_tab, char* path);
+void zenith_mkdir(root*fs_tab, char* path, char* name, int perm);
+int zenith_writef(root*fs_tab,void *f, char * path,char* name, int perm);
 
 
 #ifdef ZENITH_IMPLEMENTATION
@@ -170,10 +170,11 @@ void* zenith_malloc(root * fs_tab,uint8_t type, int user_type){
 
         case __ZENITH_DATA_NODE__:
             init_data_node(&data, "file", user_type);
+
             while(fs_tab->page_allocated[i] != 0x00){
                 i++;
             }
-            dim = (int)sizeof(data_node);
+            dim = sizeof(data_node);
             pointer = (void*)fs_tab->page_pointer[i];
             memcpy(pointer, &data, dim);
             fs_tab->free_pages -=1;
@@ -240,7 +241,7 @@ void init_data_node(data_node * data, char * name, int type){
             break;
     }
     strcpy(data->name,name);
-    data->next_node = NULL;
+    data->next_data = NULL;
     data->contiguous_data = NULL;
     data->contiguous_flag = 0X00;
     return;
@@ -261,22 +262,36 @@ void zenith_flush_fstab(root * fs_tab, int size){
 #ifdef ZENITH_NAVIGATOR_IMPLEMENTATION
 
 int zenith_insert_folder(root*fs_tab,char* path, z_folder * folder){
+    zenith_node * nodecpy = (zenith_node*)folder->node;
+    char * name = nodecpy->name;
 
     int lenght_string = strlen(path);
     zenith_node * moving_node = (zenith_node*)zenith_folder_navigate(fs_tab, path);
+    
     if(moving_node == NULL){
-        return __ZENITH_NESTING_FAILED__;
+        return __ZENITH_FOLDER_NESTING_FAILED__;
     }
     z_folder * navigation_folder = moving_node->folder;
+    if(navigation_folder!=NULL){
+        while(navigation_folder!=NULL){
+            zenith_node * current_node_pointer = (zenith_node*)navigation_folder->node;
+            if(strcmp(current_node_pointer->name, name)== 0){
+                return __ZENITH_FOLDER_NAME_ERROR__;
+            }
+            navigation_folder = navigation_folder->next;
+        }   
+    }
+    navigation_folder = moving_node->folder;
     if(navigation_folder == NULL){
         moving_node->folder = folder;
-        return __ZENITH_NESTING_FINISHED__;
+        return __ZENITH_FOLDER_NESTING_FINISHED__;
     }
     while(navigation_folder->next != NULL){
+        zenith_node * current_node_pointer = (zenith_node*)navigation_folder->node;
         navigation_folder = navigation_folder->next;
     }
     navigation_folder->next = folder;
-    return __ZENITH_NESTING_FINISHED__;
+    return __ZENITH_FOLDER_NESTING_FINISHED__;
 }
 
 void zenith_init_root_dir(root * fs_tab){
@@ -311,12 +326,12 @@ void zenith_init_root_dir(root * fs_tab){
     strcpy(node_5->name, "bin");
     folder_5->node = node_5;
 
-    if( zenith_insert_folder(fs_tab,"/", folder_0) == __ZENITH_NESTING_FAILED__ || \
-        zenith_insert_folder(fs_tab,"/", folder_1) == __ZENITH_NESTING_FAILED__ || \
-        zenith_insert_folder(fs_tab,"/", folder_2) == __ZENITH_NESTING_FAILED__ || \
-        zenith_insert_folder(fs_tab,"/", folder_3) == __ZENITH_NESTING_FAILED__ || \
-        zenith_insert_folder(fs_tab,"/", folder_4) == __ZENITH_NESTING_FAILED__ || \
-        zenith_insert_folder(fs_tab,"/", folder_5) == __ZENITH_NESTING_FAILED__){
+    if( zenith_insert_folder(fs_tab,"/", folder_0) == __ZENITH_FOLDER_NESTING_FAILED__ || \
+        zenith_insert_folder(fs_tab,"/", folder_1) == __ZENITH_FOLDER_NESTING_FAILED__ || \
+        zenith_insert_folder(fs_tab,"/", folder_2) == __ZENITH_FOLDER_NESTING_FAILED__ || \
+        zenith_insert_folder(fs_tab,"/", folder_3) == __ZENITH_FOLDER_NESTING_FAILED__ || \
+        zenith_insert_folder(fs_tab,"/", folder_4) == __ZENITH_FOLDER_NESTING_FAILED__ || \
+        zenith_insert_folder(fs_tab,"/", folder_5) == __ZENITH_FOLDER_NESTING_FAILED__){
 
             zenith_free(fs_tab, node_0);
             zenith_free(fs_tab, folder_0);
@@ -330,41 +345,56 @@ void zenith_init_root_dir(root * fs_tab){
             zenith_free(fs_tab, folder_4);
             zenith_free(fs_tab, node_5);
             zenith_free(fs_tab, folder_5);
-            printf("Segmentation fault: cannot access to fs_tab, please retry or create a new partition\n");
+            printf("Segmentation fault: cannot get access to fs_tab, please retry or create a new partition\n");
     }
 
 }
 
-void zenith_mkdir(root*fs_tab, char* name, int perm, char* path){
+void zenith_mkdir(root*fs_tab, char* path,char* name,int perm){
     if(perm == __SUPER_USER__ || perm == __USER__){
         zenith_node * node = (zenith_node*)zenith_malloc(fs_tab,__ZENITH_NODE__, perm);
         z_folder * folder = (z_folder*)zenith_malloc(fs_tab, __ZENITH_FOLDER___, perm);
         strcpy(node->name,name);
         folder->node = node;
-        if(zenith_insert_folder(fs_tab, path, folder) == __ZENITH_NESTING_FAILED__){
-            zenith_free(fs_tab,node);
-            zenith_free(fs_tab,folder);
-            printf("Cannot reate new directory, insert the right path!\n");
-        };
+
+        switch(zenith_insert_folder(fs_tab, path, folder)){
+            case __ZENITH_FOLDER_NESTING_FAILED__:
+                zenith_free(fs_tab,node);
+                zenith_free(fs_tab,folder);
+                printf("Could not create a new directory: path %s is incorrect\n", path);
+                break;
+            case __ZENITH_FOLDER_NAME_ERROR__:
+                zenith_free(fs_tab,node);
+                zenith_free(fs_tab,folder);
+                printf("Could not create a new directory: a folder named %s already exists in %s\n",name, path);
+                break;
+            default:break;
+        }
     }
 }
 
 void zenith_show_folder_cont(root*fs_tab, char * path){
     zenith_node * node = (zenith_node*)zenith_folder_navigate(fs_tab, path);
-
+    int i=0;
     if(node == NULL){
-        printf("\nEmpty folder or no folder named %s\n\n", path);
+        printf("\nEmpty folder or no folder named %s\n", path);
     }else{
-        z_folder * folder = node->folder;
-        printf("\nContent of %s:\n\n", path);
-        printf("| name\t\tpermission |\n\n");
-        int i=0;
+        printf("\nContent of %s:\n", path);
+        printf("n - type - name - permission\n\n");
+        z_folder * folder = node->folder;        
         while(folder != NULL){
             zenith_node * nn = (zenith_node*)folder->node;
-            printf("%d %s \t\t %d\n",i ,nn->name, nn->user_perm);
+            printf("%d D - %s/ - %d\n",i ,nn->name, nn->user_perm);
             folder = folder->next;
             i++;
         }
+        data_node * data = node->data;
+        while(data != NULL){
+            printf("%d F - %s - %d\n",i ,data->name, data->user_perm);
+            data = data->next_data;
+            i++;
+        }
+
     }
 }
 
@@ -407,6 +437,63 @@ void* zenith_folder_navigate(root*fs_tab, char* path){
 
 }
 
+
+#endif
+
+
+#ifdef ZENITH_NAVIGATOR_FILE_IMPLEMENTATION
+
+int zenith_writef(root*fs_tab,void*f, char * path, char*name,int perm){
+    if(perm != __SUPER_USER__ && perm != __USER__){
+        return __ZENITH_FILE_CREATION_FAILED__;
+    }
+    zenith_node * node = (zenith_node*)zenith_folder_navigate(fs_tab, path);
+    if(node != NULL){
+        data_node *d = (data_node*)zenith_malloc(fs_tab, __ZENITH_DATA_NODE__, __USER__);
+        
+        data_node * data_cpy = node->data;
+        if(data_cpy!=NULL){
+            while(data_cpy!=NULL){
+                if(strcmp(data_cpy->name, name) == 0){
+                    printf("Could not create file: a file named %s already exists in %s\n", name,path);
+                    return __ZENITH_FILE_NAME_ERROR__;
+                }
+                data_cpy = data_cpy->next_data;
+            }
+        }
+        data_cpy = node->data;
+        
+        int file_lenght = strlen(f);
+        if(file_lenght > 206){
+            /*
+            int file_array_lenght = (int)(file_lenght/256)-256;
+            float file_array_lenght_decimal = (file_array_lenght - (int)(file_lenght/256)-256)*10; 
+            if(file_array_lenght_decimal>0){
+                file_array_lenght+=1;
+            }  
+                    // code to allocate the correct amount of contiguous pages 
+                    // and save data
+            */
+            return __ZENITH_FILE_NESTING_COMPLETE__;
+        }
+        d->contiguous_flag = 0x00;
+        strcpy(d->name, name);
+        strcpy(d->data_array, f);
+        
+
+        if(data_cpy == NULL){
+            node->data = d;
+        }else{
+            while(data_cpy->next_data != NULL){
+                data_cpy = data_cpy->next_data;
+            }
+            data_cpy->next_data = d;
+        }
+        return __ZENITH_FILE_NESTING_COMPLETE__;
+    } 
+    return __ZENITH_FILE_CREATION_FAILED__;
+}
+
 #endif
 
 #ifdef ZENITH_MKFS_IMPLEMENTATION
@@ -445,8 +532,8 @@ int zenith_init_fs(int size, ...){
     }
 
     int root_size = (int)sizeof(root)/256;
-    float extra_page_root_size = (sizeof(root)/256 - root_size)*10;
-    if(extra_page_root_size > 0){
+
+    if(sizeof(root)%256 != 0){
         root_size+=1;
     }
 
