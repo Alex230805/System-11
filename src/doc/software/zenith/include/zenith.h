@@ -138,7 +138,7 @@ void zenith_init_root_dir(root * fs_tab);
 void zenith_show_folder_cont(root*fs_tab, char * path);
 void* zenith_folder_navigate(root*fs_tab, char* path);
 void zenith_mkdir(root*fs_tab, char* path, char* name, int perm);
-int zenith_writef(root*fs_tab,void *f, char * path,char* name, int perm);
+int zenith_writef(root*fs_tab,uint8_t*f, char * path,char* name, int perm);
 
 
 #ifdef ZENITH_IMPLEMENTATION
@@ -443,7 +443,7 @@ void* zenith_folder_navigate(root*fs_tab, char* path){
 
 #ifdef ZENITH_NAVIGATOR_FILE_IMPLEMENTATION
 
-int zenith_writef(root*fs_tab,void*f, char * path, char*name,int perm){
+int zenith_writef(root*fs_tab,uint8_t*f, char* path, char*name,int perm){
     if(perm != __SUPER_USER__ && perm != __USER__){
         return __ZENITH_FILE_CREATION_FAILED__;
     }
@@ -465,15 +465,51 @@ int zenith_writef(root*fs_tab,void*f, char * path, char*name,int perm){
         
         int file_lenght = strlen(f);
         if(file_lenght > 206){
-            /*
-            int file_array_lenght = (int)(file_lenght/256)-256;
-            float file_array_lenght_decimal = (file_array_lenght - (int)(file_lenght/256)-256)*10; 
-            if(file_array_lenght_decimal>0){
-                file_array_lenght+=1;
-            }  
-                    // code to allocate the correct amount of contiguous pages 
-                    // and save data
-            */
+            int page_to_allocate = (int)(file_lenght/206)+1;
+            int file_tracker = 0;
+            d->contiguous_flag = 0xff;
+            strcpy(d->name, name);
+
+            int dyn_tracker = 0;
+            while(file_tracker < file_lenght  && dyn_tracker < 206){
+                memset(&d->data_array[file_tracker],f[file_tracker],1);
+                file_tracker+=1;
+                dyn_tracker+=1;
+            }
+
+            data_node * d_header = d->contiguous_data;
+            data_node * c_data = NULL;
+
+            for(int i=0;i<page_to_allocate; i++){
+                c_data = (data_node*)zenith_malloc(fs_tab, __ZENITH_DATA_NODE__, perm);
+                strcpy(c_data->name,"");
+
+                dyn_tracker = 0;
+                while(file_tracker < file_lenght && dyn_tracker < 206){
+                    memset(&c_data->data_array[file_tracker],f[file_tracker],1);
+                    file_tracker+=1;
+                    dyn_tracker+=1;
+                }
+
+                if(d->contiguous_data != NULL){
+                    d->contiguous_data->contiguous_data = c_data;
+                    d->contiguous_data = d->contiguous_data->contiguous_data;
+                }else{
+                    d->contiguous_data = c_data;
+                }
+
+            }
+            d->contiguous_data = d_header;
+
+            if(data_cpy == NULL){
+                node->data = d;
+            }else{
+                while(data_cpy->next_data != NULL){
+                    data_cpy = data_cpy->next_data;
+                }
+                data_cpy->next_data = d;
+            }
+
             return __ZENITH_FILE_NESTING_COMPLETE__;
         }
         d->contiguous_flag = 0x00;

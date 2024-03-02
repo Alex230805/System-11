@@ -21,6 +21,16 @@ int main(void){
     char file[] = "Prova di testo e creazione file gne gne\n";
     char file2[] = "Prova di testo gne gne\n";
     char file3[] =  "Ola\n";
+
+
+    char big_file[] = \
+    "C is a general-purpose computer programming language. It was created in the 1970s by Dennis Ritchie, and remains very widely used and influential.\n\
+    By design, C's features cleanly reflect the capabilities of the targeted CPUs. It has found lasting use in operating systems, device drivers, and protocol stacks, but\n\
+     its use in application software has been decreasing.[7] C is commonly used on computer architectures that range from the largest supercomputers to the smallest microcontrollers and embedded systems.\n\
+    A successor to the programming language B, C was originally developed at Bell Labs by Ritchie between 1972 and 1973 to construct utilities running on Unix. It was applied to re-implementing the kernel\n\
+    of the Unix operating system.[8] During the 1980s, C gradually gained popularity. It has become one of the most widely used programming languages,[9][10] with C compilers available for practically all\n\
+    modern computer architectures and operating systems. The book The C Programming Language, co-authored by the original language designer, served for many years as the de facto standard for the language.\n\
+    C has been standardized since 1989 by the American National Standards Institute (ANSI) and the International Organization for Standardization (ISO).";
     
     zenith_mkdir(&fs_tab,"/home", "alessandro", __USER__);
     zenith_mkdir(&fs_tab,"/home/alessandro", "Desktop", __USER__);
@@ -44,7 +54,8 @@ int main(void){
     zenith_writef(&fs_tab, file3, "/home/alessandro/Desktop", "poesia_3.txt", __USER__);
     zenith_writef(&fs_tab, file3, "/home/alessandro/Desktop", "poesia_3.txt", __USER__);
     zenith_writef(&fs_tab, file3, "/home/alessandro/Documents", "poesia_3.txt", __USER__);
-    
+    zenith_writef(&fs_tab, big_file, "/home/alessandro/Desktop", "c.txt", __USER__);
+
     zenith_show_folder_cont(&fs_tab, "/home/alessandro/Desktop");
     zenith_show_folder_cont(&fs_tab, "/home/alessandro/Documents");
     zenith_show_folder_cont(&fs_tab, "/home/alessandro/");
