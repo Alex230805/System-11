@@ -19,7 +19,7 @@ SYS_12=$0c
 SYSTEM_CALL_0=$00 ; here insert the system call like "SYSTEM_CALL_O=print_with_graphic_card"
 SYSTEM_CALL_1=$00 ; or "SYSTEM_CALL_3=__ram_malloc"
 SYSTEM_CALL_2=$00
-SYSTEM_CALL_3=$00
+SYSTEM_CALL_3=__odb_write_with_adr
 SYSTEM_CALL_4=__ram_malloc
 SYSTEM_CALL_5=__ram_free
 SYSTEM_CALL_6=__ZENITH_SUBCALL ; based on x register for the  call id 
@@ -30,55 +30,12 @@ SYSTEM_CALL_10=$00
 SYSTEM_CALL_11=$00
 SYSTEM_CALL_12=$00
 
-; Kernel Memory Layout 
-
-L_RAM=$0000
-L_RAM_END=$2fff
-DEVICE=$3000
-DEVICE_END=$3fff
-H_RAM=$4000
-H_RAM_END=$8fff
-
-
 ; kernel driver queue and dynamic pointer allocation
 
 K_MODULE_ENUM=$0200
 
 DYN_POINTER=$0300
 DYN_POINTER_H=$0301
-
-
-; System  I/O port/dev
-
-DEV_1_READ_PORT_A_WRITE_PORT_B=$3000
-DEV_1_WRITE_PORT_B_READ_PORT_A=$3001
-DEV_1_DDRB=$3002
-DEV_1_DDRA=$3003
-DEV_1_SHIFT_REGISTER=$300A
-DEV_1_AUX_CONTROL_REGISTER=$300B
-DEV_1_PERIPHERALS_REGISTER=$300C
-DEV_1_INTERRUPT_FLAG_REGISTER=$300D
-DEV_1_INTERRUPT_ENABLE_REGISTER=$300E
-
-DEV_2_READ_PORT_A_WRITE_PORT_B=($3000 & $0100)
-DEV_2_WRITE_PORT_B_READ_PORT_A=$3001 & $0100
-DEV_2_DDRB=($3002 & $0100)
-DEV_2_DDRA=($3003 & $0100)
-DEV_2_SHIFT_REGISTER=($300A & $0100)
-DEV_2_AUX_CONTROL_REGISTER=($300B & $0100)
-DEV_2_PERIPHERALS_REGISTER=($300C & $0100)
-DEV_2_INTERRUPT_FLAG_REGISTER=($300D & $0100)
-DEV_2_INTERRUPT_ENABLE_REGISTER=($300E & $0100)
-
-DEV_3_READ_PORT_A_WRITE_PORT_B=($3000 & $0200)
-DEV_3_WRITE_PORT_B_READ_PORT_A=($3001 & $0200)
-DEV_3_DDRB=($3002 & $0200)
-DEV_3_DDRA=($3003 & $0200)
-DEV_3_SHIFT_REGISTER=($300A & $0200)
-DEV_3_AUX_CONTROL_REGISTER=($300B & $0200)
-DEV_3_PERIPHERALS_REGISTER=($300C & $0200)
-DEV_3_INTERRUPT_FLAG_REGISTER=($300D & $0200)
-DEV_3_INTERRUPT_ENABLE_REGISTER=($300E & $0200)
 
 
 ; MicroKernel Architecture
@@ -99,8 +56,13 @@ __K_BOOT:
     sta ZENITH_SD_ID                            ; letter id for sd card
     sta ZENITH_DEVICE_LIST                      ; list of identified devices
     sta ZENITH_CURRENT_DEVIE                    ; current mounted devices
+    
+    sta SYSTEM_BUS_READ_POINTER			; init system bus pointer
+    sta SYSTEM_BUS_WRITE_POINTER		; init system bus pointer
+    
 
     ; Kenrel initialization, first step: read the kernel init module and enable it
+    
     __call_and_init:
         lda K_MODULE_PRIORITY_LIST_HEAD, x
         sta DYN_POINTER
@@ -139,7 +101,6 @@ __K_BOOT:
 ;
 ;   Kernel panic routine
 ;
-;
 
 
 __kernel_panic:
@@ -158,10 +119,13 @@ __kernel_panic:
     bne __zenith_init_error_check
 
     __kernel_missing_pointer_error_detected:
-        nop
-        ;
-        ;  code to print error
-        ;
+	; code to link the pointer of the error string
+        lda #<__kernel_missing_pointer_error_msg
+	sta DYNAMIC_POINTER
+	lda #>__kernel_missing_pointer_error_msg
+
+	lda #SYS_5
+	jsr K_CALL
         jmp __k_error_loop
 
 
@@ -172,10 +136,13 @@ __kernel_panic:
     bne __kernel_out_of_memory_check
 
     __kernel_zenith_init_error_detected:
-        nop
-        ;
-        ;    code to print error
-        ;
+	; code to link the pointer of the error string
+        lda #<__zenith_init_error_msg
+	sta DYNAMIC_POINTER
+	lda #>__zenith_init_error_msg 
+	
+	lda #SYS_5
+	jsr K_CALL
         jmp __k_error_loop
 
     __kernel_out_of_memory_check:
@@ -185,10 +152,12 @@ __kernel_panic:
     bne __kernel_check_out_of_memory_index
 
     __kernel_out_of_memory_error_detected:
-        nop
-        ;
-        ;   code to print error
-        ;
+        lda #<__kernel_out_of_memory_error_msg
+	sta DYNAMIC_POINTER
+	lda #>__kernel_out_of_memory_error_msg
+        
+	lda #SYS_5
+	jsr K_CALL
         jmp __k_error_loop
 
     __kernel_check_out_of_memory_index:
@@ -198,18 +167,24 @@ __kernel_panic:
     bne __kernel_force_error_panic
 
     __kernel_malloc_out_of_memory_index_detected:
-        nop
-        ;
-        ; code to print error
-        ;
+        ; code to link the pointer of the error string
+        
+        lda #<__kernel_out_of_memory_error_msg
+	sta DYNAMIC_POINTER
+	lda #>__kernel_out_of_memory_error_msg
+	lda #SYS_5
+	jsr K_CALL
         jmp __k_error_loop
     
     __kernel_force_error_panic:
-        ;
-        ;   code to print error
-        ;
+        lda #<__kernel_focrce_panic_msg
+	sta DYNAMIC_POINTER
+	lda #>__kernel_force_panic_msg	
+	
+	sta DYNAMIC_POINTER_H
+        lda #SYS_5
+	jsr K_CALL
         jmp __k_error_loop
-
     
 __k_error_loop:
     nop
@@ -220,7 +195,7 @@ __k_error_loop:
 ;
 
 
-__kernel_missing_pointer_error_msg: 
+ __kernel_missing_pointer_error_msg:
     .word "Error: missing return pointer trigger kernel panic\n"
     .byte $00
 
@@ -230,12 +205,7 @@ __zenith_init_error_msg:
 
 
 __kernel_out_of_memory_error_msg:
-    .word "Error: out of memory error\n"
-    .byte $00
-
-
-__kernel_malloc_segmentation_fault_msg:
-    .word "Malloc: segmentation fault\n"
+   .word "Error: out of memory error\n"
     .byte $00
 
 

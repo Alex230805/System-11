@@ -8,7 +8,7 @@ K_MODULE_PRIORITY_LIST_HEAD=$0201
 K_MODULE_PRIORITY_LIST_END=$02ff
 
 
-K_MODULE_NUMBER_ON_BOOT=$05
+K_MODULE_NUMBER_ON_BOOT=$06
 
 
  .org $00
@@ -40,7 +40,7 @@ boot:
     lda #>__key_init
     sta K_MODULE_PRIORITY_LIST_HEAD,x
     inx
-    ; same for video card
+     ; same for video card
 
     lda #<__fx_card_init
     sta K_MODULE_PRIORITY_LIST_HEAD,x
@@ -49,7 +49,7 @@ boot:
     sta K_MODULE_PRIORITY_LIST_HEAD,x
     inx
 
-    ; same for cf card
+   ; same for cf card
 
     lda #<__cf_card_init
     sta K_MODULE_PRIORITY_LIST_HEAD,x
@@ -78,6 +78,14 @@ boot:
     sta K_MODULE_PRIORITY_LIST_HEAD,x
     inx
 
+    ;same for onboard display
+
+    lda #<__odb_init
+    sta K_MODULE_PRIORITY_LIST_HEAD,x
+    inx
+    lda #>__odb_init
+    sta K_MODULE_PRIORITY_LIST_HEAD,x
+    inx
     jmp __K_BOOT
     
 
@@ -85,7 +93,7 @@ boot:
 ; KERNEL FILE
  include "./mos65/krn.s"
  include "./mos65/krn_dyn_call.s"
- include "./mos65/krn_rams.s"
+; include "./mos65/krn_rams.s"
  include "./mos65/kstate.s"
 
 ; FILE SYSTEM FILE
