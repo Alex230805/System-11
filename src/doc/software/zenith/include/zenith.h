@@ -137,7 +137,7 @@ void init_node(zenith_node * node, char * name, int type);
 void init_data_node(data_node * data, char * name, int type);
 void init_folder(z_folder * folder);
 
-void zenith_flush_fstab(void* phd_adr, int size);
+void zenith_flush_fstab(void* phd_adr,uint8_t* zenith_element ,int size);
 void* zenith_get_data(void* phd_adr,int type);
 
 int zenith_init_fs(int size, ...);
@@ -264,9 +264,14 @@ void init_folder(z_folder * folder){
 }
 
 
-void zenith_flush_fstab(void* phd_adr, int size){
-
+void zenith_flush_fstab(void* phd_adr,uint8_t* zenith_element ,int size){
+  uint8_t byte = 0;
+    for(size_t i = 0; i<size;i++){
+	byte = zenith_element[i];
+    	//EEPROM.update(phd_adr+i,zenith_element[i]);
+    }
     return;
+    
 }
 
 
