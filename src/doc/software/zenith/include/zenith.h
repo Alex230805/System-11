@@ -34,7 +34,9 @@
 
 #define __ZENITH_NODE__  0x20
 #define __ZENITH_DATA_NODE__ 0x40
-#define __ZENITH_FOLDER___ 0x80
+#define __ZENITH_FOLDER__ 0x80
+#define __ROOT_FS_TAB__ 0xA0
+
 
 #define __ZENITH_FOLDER_NESTING_FAILED__ (__ZENITH_FOLDER_MASK__ | 0x00)
 #define __ZENITH_FOLDER_NESTING_FINISHED__ (__ZENITH_FOLDER_MASK__ | 0x01)
@@ -134,7 +136,9 @@ void zenith_free(root*fs_tab, void * pointer);
 void init_node(zenith_node * node, char * name, int type);
 void init_data_node(data_node * data, char * name, int type);
 void init_folder(z_folder * folder);
-void zenith_flush_fstab(root*fstab, int size);
+
+void zenith_flush_fstab(void* phd_adr, int size);
+void* zenith_get_data(void* phd_adr,int type);
 
 int zenith_init_fs(int size, ...);
 void zenith_print_volume_information(root*fs_tab);
@@ -187,7 +191,7 @@ void* zenith_malloc(root * fs_tab,uint8_t type, int user_type){
             fs_tab->used_space +=1;
             break;
 
-        case __ZENITH_FOLDER___:
+        case __ZENITH_FOLDER__:
             init_folder(&folder);
             while(fs_tab->page_allocated[i] != 0x00){
                 i++;
@@ -220,7 +224,7 @@ void zenith_free(root*fs_tab, void * pointer){
 void init_node(zenith_node * node, char * name, int type){
     switch(type){
         case __SUPER_USER__:
-            node->user_perm = __Z_SUPER_PERM__+__Z_SUPER_READ_PERM__+__Z_SUPER_WRITE_PERM__;
+            node->user_perm =__Z_SUPER_PERM__+__Z_SUPER_READ_PERM__+__Z_SUPER_WRITE_PERM__;
             break;
         case __USER__:
             node->user_perm = __Z_DEFAULT_USER_PERM__+__Z_USER_READ_PERM__+__Z_USER_WRITE_PERM__;
@@ -260,9 +264,61 @@ void init_folder(z_folder * folder){
 }
 
 
-void zenith_flush_fstab(root * fs_tab, int size){
+void zenith_flush_fstab(void* phd_adr, int size){
 
     return;
+}
+
+
+void* zenith_get_data(void* phd_adr,int type){
+    zenith_node * node;
+    data_node * dnode;
+    z_folder * folder;
+    root * fs_tab;
+    int size = 0;
+
+    void* out = NULL;
+
+    switch(type){
+	case __ZENITH_NODE__:
+		// here insert function to comunicate with the driver and get information from it. This example use the EEPROM function from Arduino library
+		size = sizeof(zenith_node);
+		node = (zenith_node*)malloc(sizeof(zenith_node));
+		for(size_t i=0;i<size;i++){
+			//memcpy(&node[i],&EEPROM.read(phd_adr+i), 1);
+		}
+		out = (void*)node;
+		break;
+	case __ZENITH_DATA_NODE__:
+		size = sizeof(data_node);
+		dnode = (data_node*)malloc(size);
+		for(size_t i=0;i<size;i++){
+			//memcpy(&dnode[i],&EEPROM.read(phd_adr+i), 1);
+		}
+		out = (void*)dnode;
+		break;
+	case __ZENITH_FOLDER__:
+		size = sizeof(z_folder);
+		folder = (z_folder*)malloc(size);
+		for(size_t i=0;i<size;i++){
+			//memcpy(&folder[i],&EEPROM.read(phd_adr+i), 1);
+		}
+		out = (void*)folder;
+
+		break;
+	case __ROOT_FS_TAB__:
+		size = sizeof(root);
+		fs_tab = (root*)malloc(size);
+		for(size_t i=0;i<size;i++){
+			//memcpy(&fs_tab[i],&EEPROM.read(phd_adr+i), 1);
+		}
+		out = (void*)fs_tab;
+		break;
+	default:
+		break;
+    }
+    return NULL;
+	
 }
 
 #ifdef ZENITH_NAVIGATOR_IMPLEMENTATION
@@ -302,33 +358,33 @@ int zenith_insert_folder(root*fs_tab,char* path, z_folder * folder){
 
 void zenith_init_root_dir(root * fs_tab){
     zenith_node * node_0 = (zenith_node*)zenith_malloc(fs_tab, __ZENITH_NODE__, __SUPER_USER__);
-    z_folder * folder_0 = (z_folder*)zenith_malloc(fs_tab, __ZENITH_FOLDER___, __SUPER_USER__);
+    z_folder * folder_0 = (z_folder*)zenith_malloc(fs_tab, __ZENITH_FOLDER__, __SUPER_USER__);
     strcpy(node_0->name, "usr");
     folder_0->node = node_0;
 
     zenith_node * node_1 = (zenith_node*)zenith_malloc(fs_tab, __ZENITH_NODE__, __SUPER_USER__);
-    z_folder * folder_1 = (z_folder*)zenith_malloc(fs_tab, __ZENITH_FOLDER___, __SUPER_USER__);
+    z_folder * folder_1 = (z_folder*)zenith_malloc(fs_tab, __ZENITH_FOLDER__, __SUPER_USER__);
     strcpy(node_1->name, "share");
     folder_1->node = node_1;
 
     zenith_node * node_2 = (zenith_node*)zenith_malloc(fs_tab, __ZENITH_NODE__, __SUPER_USER__);
-    z_folder * folder_2 = (z_folder*)zenith_malloc(fs_tab, __ZENITH_FOLDER___, __SUPER_USER__);
+    z_folder * folder_2 = (z_folder*)zenith_malloc(fs_tab, __ZENITH_FOLDER__, __SUPER_USER__);
     strcpy(node_2->name, "lib");
     folder_2->node = node_2;
 
 
     zenith_node * node_3 = (zenith_node*)zenith_malloc(fs_tab, __ZENITH_NODE__, __SUPER_USER__);
-    z_folder * folder_3 = (z_folder*)zenith_malloc(fs_tab, __ZENITH_FOLDER___, __SUPER_USER__);
+    z_folder * folder_3 = (z_folder*)zenith_malloc(fs_tab, __ZENITH_FOLDER__, __SUPER_USER__);
     strcpy(node_3->name, "etc");
     folder_3->node = node_3;
 
     zenith_node * node_4 = (zenith_node*)zenith_malloc(fs_tab, __ZENITH_NODE__, __SUPER_USER__);
-    z_folder * folder_4 = (z_folder*)zenith_malloc(fs_tab, __ZENITH_FOLDER___, __SUPER_USER__);
+    z_folder * folder_4 = (z_folder*)zenith_malloc(fs_tab, __ZENITH_FOLDER__, __SUPER_USER__);
     strcpy(node_4->name, "home");
     folder_4->node = node_4;
 
     zenith_node * node_5 = (zenith_node*)zenith_malloc(fs_tab, __ZENITH_NODE__, __SUPER_USER__);
-    z_folder * folder_5 = (z_folder*)zenith_malloc(fs_tab, __ZENITH_FOLDER___, __SUPER_USER__);
+    z_folder * folder_5 = (z_folder*)zenith_malloc(fs_tab, __ZENITH_FOLDER__, __SUPER_USER__);
     strcpy(node_5->name, "bin");
     folder_5->node = node_5;
 
@@ -359,7 +415,7 @@ void zenith_init_root_dir(root * fs_tab){
 void zenith_mkdir(root*fs_tab, char* path,char* name,int perm){
     if(perm == __SUPER_USER__ || perm == __USER__){
         zenith_node * node = (zenith_node*)zenith_malloc(fs_tab,__ZENITH_NODE__, perm);
-        z_folder * folder = (z_folder*)zenith_malloc(fs_tab, __ZENITH_FOLDER___, perm);
+        z_folder * folder = (z_folder*)zenith_malloc(fs_tab, __ZENITH_FOLDER__, perm);
         strcpy(node->name,name);
         folder->node = node;
 
