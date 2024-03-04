@@ -37,6 +37,11 @@
 #define __ZENITH_FOLDER__ 0x80
 #define __ROOT_FS_TAB__ 0xA0
 
+#define __ROOT_LENGHT__ (sizeof(root))
+#define __NODE_LENGHT__ (sizeof(zenith_node))
+#define __FOLDER_LENGHT__ (sizeof(z_folder))
+#define __DATA_LENGHT__ (sizeof(data_node))
+
 
 #define __ZENITH_FOLDER_NESTING_FAILED__ (__ZENITH_FOLDER_MASK__ | 0x00)
 #define __ZENITH_FOLDER_NESTING_FINISHED__ (__ZENITH_FOLDER_MASK__ | 0x01)
@@ -127,27 +132,39 @@ typedef struct{
 }root;
 
 
-uint8_t* drive_space;           // drive space to simulate
-int global_root_size;
+uint8_t* drive_space;           // virtual_drive_space
+int global_root_size;		// byte
 
 
+// zentith implementation
 void* zenith_malloc(root * fs_tab,uint8_t type, int user_type);
 void zenith_free(root*fs_tab, void * pointer);
 void init_node(zenith_node * node, char * name, int type);
 void init_data_node(data_node * data, char * name, int type);
 void init_folder(z_folder * folder);
-
-void zenith_flush_fstab(void* phd_adr,uint8_t* zenith_element ,int size);
-void* zenith_get_data(void* phd_adr,int type);
-
-int zenith_init_fs(int size, ...);
+void zenith_flush_fs_tab(root*fs_tab);
+void zenith_flush_data(data_node*data, void* adr);
+void zenith_flush_folder(z_folder*folder, void*adr);
+void zenith_flush_node(data_node*data, void*adr);
+data_node* zenith_get_data(void*adr);
+z_folder* zenith_get_folder(void*adr);
+zenith_node* zenith_get_node(void*adr);
+uint8_t* zenith_get_full_fs_data();
 void zenith_print_volume_information(root*fs_tab);
+
+
+// zenith init fs implementation
+int zenith_init_fs(int size, ...);
+
+// zenith navigation implementation
 
 int zenith_insert_folder(root*fs_tab,char* path, z_folder * folder);
 void zenith_init_root_dir(root * fs_tab);
 void zenith_show_folder_cont(root*fs_tab, char * path);
 void* zenith_folder_navigate(root*fs_tab, char* path);
 void zenith_mkdir(root*fs_tab, char* path, char* name, int perm);
+
+	// with file implementation 
 int zenith_writef(root*fs_tab,uint8_t*f, char * path,char* name, int perm);
 uint8_t* zenith_loadf(root*fs_tab, char *path, char*name);
 
@@ -171,9 +188,8 @@ void* zenith_malloc(root * fs_tab,uint8_t type, int user_type){
             while(fs_tab->page_allocated[i] != 0x00){
                 i++;
             }
-            dim = sizeof(zenith_node);
             pointer = (void*)fs_tab->page_pointer[i];
-            memcpy(pointer, &node, dim);
+            memcpy(pointer, &node, __NODE_LENGHT__);
             fs_tab->free_pages -=1;
             fs_tab->used_space +=1;
             break;
@@ -184,9 +200,8 @@ void* zenith_malloc(root * fs_tab,uint8_t type, int user_type){
             while(fs_tab->page_allocated[i] != 0x00){
                 i++;
             }
-            dim = sizeof(data_node);
             pointer = (void*)fs_tab->page_pointer[i];
-            memcpy(pointer, &data, dim);
+            memcpy(pointer, &data, __DATA_LENGHT__);
             fs_tab->free_pages -=1;
             fs_tab->used_space +=1;
             break;
@@ -196,9 +211,8 @@ void* zenith_malloc(root * fs_tab,uint8_t type, int user_type){
             while(fs_tab->page_allocated[i] != 0x00){
                 i++;
             }
-            dim = sizeof(folder);
             pointer = (void*)fs_tab->page_pointer[i];
-            memcpy(pointer, &folder, dim);
+            memcpy(pointer, &folder, __FOLDER_LENGHT);
             fs_tab->free_pages -=1;
             fs_tab->used_space +=1;
             break;
@@ -264,67 +278,77 @@ void init_folder(z_folder * folder){
 }
 
 
-void zenith_flush_fstab(void* phd_adr,uint8_t* zenith_element ,int size){
-  uint8_t byte = 0;
-    for(size_t i = 0; i<size;i++){
-	byte = zenith_element[i];
-    	//EEPROM.update(phd_adr+i,zenith_element[i]);
+void zenith_flush_fs_tab(root*fs_tab){
+    for(size_t i = 0; i < __ROOT_SIZE__; i++){
+	EEPROM.update(drive_space[i]);
+    }
+    return; 
+}
+
+void zenith_flush_data(data_node* data, void* adr){
+    for(size_t i = 0; i < __NODE_SIZE__; i++){
+	EEPROM.update(drive_space[adr+i]);
     }
     return;
-    
 }
 
+void zenith_flush_folder(z_folder* folder, void* adr){
+    for(size_t i = 0; i < __FOLDER_SIZE__; i++){
+	EEPROM.update(drive_space[adr+i]);
+    }
+    return;
+}
 
-void* zenith_get_data(void* phd_adr,int type){
-    zenith_node * node;
-    data_node * dnode;
-    z_folder * folder;
-    root * fs_tab;
-    int size = 0;
+void zenith_flush_node(zenith_node* node, void* adr){
+    for(size_t i = 0; i < __NODE_SIZE__; i++){
+	EEPROM.update(drive_space[adr+i]);
+    }
+    return;
+}
 
-    void* out = NULL;
+data_node* zenith_get_data(void*adr){
+    data_node data;
+    for(size_t i = 0; i < __NODE_SIZE__; i++){
+	memset(&data,EEPROM.read(adr+i, 1);
+    }
+    return &data;
+}
 
-    switch(type){
-	case __ZENITH_NODE__:
-		// here insert function to comunicate with the driver and get information from it. This example use the EEPROM function from Arduino library
-		size = sizeof(zenith_node);
-		node = (zenith_node*)malloc(sizeof(zenith_node));
-		for(size_t i=0;i<size;i++){
-			//memcpy(&node[i],&EEPROM.read(phd_adr+i), 1);
-		}
-		out = (void*)node;
-		break;
-	case __ZENITH_DATA_NODE__:
-		size = sizeof(data_node);
-		dnode = (data_node*)malloc(size);
-		for(size_t i=0;i<size;i++){
-			//memcpy(&dnode[i],&EEPROM.read(phd_adr+i), 1);
-		}
-		out = (void*)dnode;
-		break;
-	case __ZENITH_FOLDER__:
-		size = sizeof(z_folder);
-		folder = (z_folder*)malloc(size);
-		for(size_t i=0;i<size;i++){
-			//memcpy(&folder[i],&EEPROM.read(phd_adr+i), 1);
-		}
-		out = (void*)folder;
+z_folder* zenith_get_folder(void* adr){
+    z_folder folder;
+    for(size_t i = 0; i < __FOLDER_SIZE__; i++){
+	memset(&folder,EEPROM.read(adr+i, 1);
+    }
+    return &folder;
+}
 
-		break;
-	case __ROOT_FS_TAB__:
-		size = sizeof(root);
-		fs_tab = (root*)malloc(size);
-		for(size_t i=0;i<size;i++){
-			//memcpy(&fs_tab[i],&EEPROM.read(phd_adr+i), 1);
-		}
-		out = (void*)fs_tab;
-		break;
-	default:
-		break;
+zenith_node* zenith_get_node(void* adr){
+    zenith_node node;
+    for(size_t i = 0; i < __NODE_SIZE__; i++){
+	memset(&node,EEPROM.read(adr+i, 1);
+    }
+    return &node;
+}
+
+uint8_t* zenith_get_full_fs_data(){
+    for(size_t i = 0; i < global_root_size; i++){
+	memset(drive_space[i], EEPROM.read(i));
     }
     return NULL;
-	
 }
+
+
+void zenith_print_volume_information(root*fs_tab){
+    printf("\n\nZ-System Volume Information\n\n");
+    printf("Zenith version: %s\n", fs_tab->version_name);
+    printf("Root name: %s\n", fs_tab->first_node->name);
+    printf("Partition size (Kbytes): %d kb\n", (fs_tab->total_size)/1024);
+    printf("Partition free space (in Kbytes, not accurate): %d kb\n", (int)(fs_tab->free_pages*256)/1024);
+    printf("Partition used space (int Kbytes, not accurate): %d kb\n", (int)(fs_tab->used_space*256)/1024);
+    printf("User perm: %d\n\n", fs_tab->first_node->user_perm);
+}
+
+
 
 #ifdef ZENITH_NAVIGATOR_IMPLEMENTATION
 
@@ -711,7 +735,7 @@ int zenith_init_fs(int size, ...){
         fs_table.page_allocated[i] = FALSE;
     }
 
-    int root_size = (int)sizeof(root)/256;
+    int root_size = (int)__ROOT_LENGHT__/256;
 
     if(sizeof(root)%256 != 0){
         root_size+=1;
@@ -735,16 +759,6 @@ int zenith_init_fs(int size, ...){
 
 
     return __ZENITH_INIT_COMPLETE__;
-}
-
-void zenith_print_volume_information(root*fs_tab){
-    printf("\n\nZ-System Volume Information\n\n");
-    printf("Zenith version: %s\n", fs_tab->version_name);
-    printf("Root name: %s\n", fs_tab->first_node->name);
-    printf("Partition size (Kbytes): %d kb\n", (fs_tab->total_size)/1024);
-    printf("Partition free space (in Kbytes, not accurate): %d kb\n", (int)(fs_tab->free_pages*256)/1024);
-    printf("Partition used space (int Kbytes, not accurate): %d kb\n", (int)(fs_tab->used_space*256)/1024);
-    printf("User perm: %d\n\n", fs_tab->first_node->user_perm);
 }
 
 
