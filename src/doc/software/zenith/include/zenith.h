@@ -152,14 +152,6 @@ void zenith_free(root*fs_tab, void * pointer);
 void init_node(zenith_node * node, char * name, int type);
 void init_data_node(data_node * data, char * name, int type);
 void init_folder(z_folder * folder);
-void zenith_flush_fs_tab(root*fs_tab);
-void zenith_flush_data(data_node*data, void* adr);
-void zenith_flush_folder(z_folder*folder, void*adr);
-void zenith_flush_node(zenith_node*data, void*adr);
-data_node* zenith_get_data(void*adr);
-z_folder* zenith_get_folder(void*adr);
-zenith_node* zenith_get_node(void*adr);
-uint8_t* zenith_get_full_fs_data();
 void zenith_print_volume_information(root*fs_tab);
 
 
@@ -175,7 +167,7 @@ void* zenith_folder_navigate(root*fs_tab, char* path);
 void zenith_mkdir(root*fs_tab, char* path, char* name, int perm);
 
 	// with file implementation 
-int zenith_writef(root*fs_tab,uint8_t*f, char * path,char* name, int perm);
+int zenith_writef(root*fs_tab, char*f, char * path,char* name, int perm);
 uint8_t* zenith_loadf(root*fs_tab, char *path, char*name);
 
 #ifdef ZENITH_IMPLEMENTATION
@@ -286,115 +278,6 @@ void init_folder(z_folder * folder){
     folder->node = NULL;
     return;
 }
-
-
-void zenith_flush_fs_tab(root*fs_tab){
-    for(size_t i = 0; i < __ROOT_LENGHT__; i++){
-	#ifdef VIRTUAL_PLATFORM
-	    memcpy(&virtual_space[i], &fs_tab[i],1); 
-	#elif ARDUINO_PLATFORM
-	    EEPROM.update(fs_tab[i]);
-	#endif	
-    }
-    return; 
-}
-
-void zenith_flush_data(data_node* data, void* adr){
-    for(size_t i = 0; i < __DATA_LENGHT__; i++){
-	#ifdef VIRTUAL_PLATFORM
-	    memcpy(&virtual_space[i], &data[i],1); 
-	#elif ARDUINO_PLATFORM
-	    EEPROM.update(data[i]);
-	#endif
-    }
-    return;
-}
-
-void zenith_flush_folder(z_folder* folder, void* adr){
-    for(size_t i = 0; i < __FOLDER_LENGHT__; i++){
-	#ifdef VIRTUAL_PLATFORM
-	    memcpy(&virtual_space[i], &folder[i],1); 
-	#elif ARDUINO_PLATFORM
-	    EEPROM.update(folder[i]);
-	#endif	
-    }
-    return;
-}
-
-void zenith_flush_node(zenith_node* node, void* adr){
-    for(size_t i = 0; i < __NODE_LENGHT__; i++){
-	#ifdef VIRTUAL_PLATFORM
-	    memcpy(&virtual_space[i], &node[i],1); 
-	#elif ARDUINO_PLATFORM
-	    EEPROM.update(fs_tab[i]);
-	#endif
-    }
-    return;
-}
-
-data_node* zenith_get_data(void*adr){
-    data_node data;
-    data_node * cache_data = (data_node*)malloc(__DATA_LENGHT__);
-    for(size_t i = 0; i < __DATA_LENGHT__; i++){	
-	#ifdef VIRTUAL_PLATFORM
-	    memcpy(&cache_data[i], &virtual_space[i],1);
-	#elif ARDUINO_PLATFORM
-	    uint8_t drom_out = EEPROM.read(adr+i);
-	    memcpy(&cache_data[i],&drom_out,1); 
-	#endif
-    }
-    memcpy(&data, cache_data, __DATA_LENGHT__);
-    free(cache_data);
-    cache_data = NULL;
-    return &data;
-}
-
-z_folder* zenith_get_folder(void* adr){
-    z_folder folder;
-    z_folder *cache_folder = (z_folder*)malloc(__FOLDER_LENGHT__);
-    for(size_t i = 0; i < __FOLDER_LENGHT__; i++){
-	#ifdef VIRTUAL_PLATFORM
-	    memcpy(&cache_folder[i], &virtual_space[i],1); 
-	#elif ARDUINO_PLATFORM
-	    uint8_t drom_out = EEPROM.read(adr+i);
-	    memcpy(&cache_folder[i],&drom_out,1);  
-	#endif
-    }
-    memcpy(&folder,cache_folder, __FOLDER_LENGHT__);
-    free(cache_folder);
-    cache_folder = NULL;
-    return &folder;
-}
-
-zenith_node* zenith_get_node(void* adr){
-    zenith_node node;
-    zenith_node* cache_node = (zenith_node*)malloc(__NODE_LENGHT__);
-    for(size_t i = 0; i < __NODE_LENGHT__; i++){
-	#ifdef VIRTUAL_PLATFORM
-	   memcpy(&cache_node[i], &virtual_space[i],1); 
-	#elif ARDUINO_PLATFORM
-	   uint8_t drom_out = EEPROM.read(adr+i);
-	   memcpy(&cache_node[i],&drom_out,1);  
-	#endif	
-    }
-    memcpy(&node,cache_node, __NODE_LENGHT__);
-    free(cache_node);
-    cache_node = NULL;
-    return &node;
-}
-
-uint8_t* zenith_get_full_fs_data(){
-    for(size_t i = 0; i < global_root_size; i++){
-	#ifdef VIRTUAL_PLATFORM
-	    memcpy(&drive_space[i], &virtual_space[i],1); 
-	#elif ARDUINO_PLATFORM
-	    uint8_t drom_out = EEPROM.read(adr+i);
-	    memcpy(&drive_space[i],&drom_out,1); 
-	#endif
-    }
-    return NULL;
-}
-
 
 void zenith_print_volume_information(root*fs_tab){
     printf("\n\nZ-System Volume Information\n\n");
@@ -592,7 +475,7 @@ void* zenith_folder_navigate(root*fs_tab, char* path){
 
 #ifdef ZENITH_NAVIGATOR_FILE_IMPLEMENTATION
 
-int zenith_writef(root*fs_tab,uint8_t*f, char* path, char*name,int perm){
+int zenith_writef(root*fs_tab,char*f, char* path, char*name,int perm){
     if(perm != __SUPER_USER__ && perm != __USER__){
         return __ZENITH_FILE_CREATION_FAILED__;
     }
@@ -670,7 +553,7 @@ int zenith_writef(root*fs_tab,uint8_t*f, char* path, char*name,int perm){
         }
         d->contiguous_flag = 0x00;
         strcpy(d->name, name);
-        strcpy(d->data_array, f);
+        strcpy((char*)d->data_array, f);
         
 
         if(data_cpy == NULL){
@@ -730,7 +613,7 @@ uint8_t* zenith_loadf(root*fs_tab, char *path, char*name){
 
         while(file_p->contiguous_data != NULL){
             dyn_pointer = 0;
-            int lenght = strlen(file_p->contiguous_data->data_array);
+            int lenght = strlen((char*)file_p->contiguous_data->data_array);
              while(dyn_pointer<200){
                 out[size] = file_p->contiguous_data->data_array[dyn_pointer];
                 dyn_pointer+=1;
@@ -742,17 +625,17 @@ uint8_t* zenith_loadf(root*fs_tab, char *path, char*name){
             }
             file_p->contiguous_data = file_p->contiguous_data->contiguous_data;
         }
-        out[size+1] = "\0";
+        out[size+1] = 0x00;
         return out;
     }
     out = (uint8_t*)malloc(sizeof(uint8_t)*200);
     int size = 0;
-    int lenght = strlen(file_p->data_array);
+    int lenght = strlen((char*)file_p->data_array);
     while(size<lenght){
         out[size] = file_p->data_array[size];
         size+=1;
     }
-    out[size+1] = "\0";
+    out[size+1] = 0x00;
     return out;
 }
 
@@ -762,9 +645,7 @@ uint8_t* zenith_loadf(root*fs_tab, char *path, char*name){
 
 int zenith_init_fs(int size, ...){
     drive_space = (uint8_t*)malloc(sizeof(uint8_t)*size);     // define drive space
-    #ifdef ARDUINO_PLATFORM
-    	virtual_space = (uint8_t)malloc(sizeof(uint8_t)*size); // virtual drive space
-    #endif
+
 	va_list ptr;
 
     va_start(ptr,1);
@@ -787,12 +668,8 @@ int zenith_init_fs(int size, ...){
     // copy address for pages
     int j = 0;
     for(int i=0;i<MAX_CAPACITY;i++){
-	#ifdef VIRTUAL_PLATFORM
-        	fs_table.page_pointer[i] = &drive_space[j];
-        	j+=256;
-	#elif
-		fs_table.page_pointer[i] = i*256;
-    	#endif
+        fs_table.page_pointer[i] = &drive_space[j];
+        j+=256;
     }
 
     // set flags to 0
