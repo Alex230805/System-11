@@ -4,8 +4,8 @@ NMI_VECTOR=$fffa
 STARTUP_VECTOR=$fffc
 
 
-K_MODULE_PRIORITY_LIST_HEAD=$0201
-K_MODULE_PRIORITY_LIST_END=$02ff
+K_MODULE_PRIORITY_LIST_HEAD=$0200
+K_MODULE_PRIORITY_LIST_END=$0280
 
 
 K_MODULE_NUMBER_ON_BOOT=$06
@@ -28,10 +28,7 @@ boot:
     ;
 
     ; Kernel list sequence: set the default module to activate on boot, the kernel will automaticaly run the first entry
-    lda #K_MODULE_NUMBER_ON_BOOT    ; load module number sequence
-    sta K_MODULE_ENUM               ; store it for future kernel usage
-
-    ldx K_MODULE_PRIORITY_LIST_HEAD
+    ldx #$00 
 
     ; load keyboard init module according to the driver selected
     lda #<__key_init

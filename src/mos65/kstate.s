@@ -53,10 +53,12 @@ FX_CARD_MEMORY_FREE=KERNEL_VARIABLE_HEADER+14   ; total memory free for current 
 FX_CARD_MEMORY_USED=KERNEL_VARIABLE_HEADER+15 ; memory used from current bank
 FX_CARD_PAGE_FREE=KERNEL_VARIABLE_HEADER+16 ; page free (all bank)
 
+OB_DISPLAY_ENABLE = KERNEL_VARIABLE_HEADER+17 ; Onboard display status flag
+
 ; Zenith FS
 
 
-ZENITH_VARIABLE_HEADER=$0302        ; ZENITH_VARIABLE_HEADER
+ZENITH_VARIABLE_HEADER=$0300        ; ZENITH_VARIABLE_HEADER
 
 ZENITH_CURRENT_DEVIE=ZENITH_VARIABLE_HEADER ; current device mounted ( enumerative rom A to D )
 
@@ -144,13 +146,4 @@ SYSTEM_BUS_LENGHT=SYSTEM_BUS_HEAD+2 ; max lenght of system bus vector
 
 SYSTEM_BUS_START=SYSTEM_BUS_HEAD+3 ; start location
 SYSTEM_BUS_END=(SYSTEM_BUS_HEAD+3)+256 ; end location
-
-
-
-
-
-
-
-
-
 

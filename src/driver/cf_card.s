@@ -8,12 +8,12 @@
 
 
 
-CF_CARD_LB=$86          ; low byte address
-CF_CARD_HB=$87          ; hight byte address
-CF_CARD_XLB=$88         ; x low byte address
-CF_CARD_XHB=$89         ; x hight byte address
+CF_CARD_LB=$85          ; low byte address
+CF_CARD_HB=$86          ; hight byte address
+CF_CARD_XLB=$87         ; x low byte address
+CF_CARD_XHB=$88         ; x hight byte address
 
-CF_CARD_DATA_PORT=$8A   ; data port
+CF_CARD_DATA_PORT=$89   ; data port
 
 __cf_card_init:
     ; apply the start address for cf card
@@ -38,9 +38,7 @@ __cf_card_init:
     ldx ZENITH_DEVICE_LIST ; load zenith device list enum
     cpx #$05                ; compare with 5 ( the number must be inferior to that )
     beq __cf_zenith_abort_addition  ; if ar equal then abort assignment
-    lda #"A"                 ; else load a into accumulator
-
-    clc
+    lda #"A"                 ; else load a into accumulatoENABLEc
     adc ZENITH_DEVICE_LIST   ; sum it with the device list enum
     sta ZENITH_CF_ID            ; save letter
     

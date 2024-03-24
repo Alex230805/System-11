@@ -3,7 +3,7 @@
 KEYBOARD_READ_POINTER=$00 ; variable to keep track the keyboard buffer
 KEYBOARD_WRITE_POINTER=$01 ; 
 
-KEYBOARD_INTERFACE=DEV_1_READ_PORT_A_WRITE_PORT_B ; put the interface here
+KEYBOARD_INTERFACE= ; DEV_1_READ_PORT_A_WRITE_PORT_B ; put the interface here
 
 KEYBOARD_BUFFER_LENGHT=$80 ; lenght of the keyboard buffer
 KEYBOARD_BUFFER_START=$02 ; keyboard buffer start

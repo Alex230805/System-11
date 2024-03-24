@@ -1,7 +1,9 @@
 ; fx card driver
 
 
-FX_CARD_PORT=$85
+FX_CARD_PORT=$8A 
+
+FX_CARD_CONTROL_PORT = $8B
 
 
 __fx_card_init:

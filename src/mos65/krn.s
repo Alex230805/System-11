@@ -19,7 +19,7 @@ SYS_12=$0c
 SYSTEM_CALL_0=$00 ; here insert the system call like "SYSTEM_CALL_O=print_with_graphic_card"
 SYSTEM_CALL_1=$00 ; or "SYSTEM_CALL_3=__ram_malloc"
 SYSTEM_CALL_2=$00
-SYSTEM_CALL_3=__odb_write_with_adr
+SYSTEM_CALL_3=__obd_write_with_adr
 SYSTEM_CALL_4=__ram_malloc
 SYSTEM_CALL_5=__ram_free
 SYSTEM_CALL_6=__ZENITH_SUBCALL ; based on x register for the  call id 
@@ -32,10 +32,39 @@ SYSTEM_CALL_12=$00
 
 ; kernel driver queue and dynamic pointer allocation
 
-K_MODULE_ENUM=$0200
+DYN_POINTER=$83
+DYN_POINTER_H=$84
 
-DYN_POINTER=$0300
-DYN_POINTER_H=$0301
+VIA_0=$0280
+VIA_0_IO_B=VIA_0
+VIA_0_IO_A=VIA_0+1
+VIA_0_DDRB=VIA_0+2  
+VIA_0_DDRA=VIA_0+3 
+VIA_0_T1CL=VIA_0+4
+VIA_0_T1CH=VIA_0+5
+VIA_0_T1LL=VIA_0+6
+VIA_0_T1LH=VIA_0+7
+VIA_0_T2CL=VIA_0+8
+VIA_0_T2CH=VIA_0+9
+VIA_0_SR=VIA_0+10
+VIA_0_AUX=VIA_0+11
+VIA_0_PER=VIA_0+12
+
+VIA_1=VIA_1+16
+VIA_1_IO_B=VIA_1
+VIA_1_IO_A=VIA_1+1
+VIA_1_DDRB=VIA_1+2  
+VIA_1_DDRA=VIA_1+3 
+VIA_1_T1CL=VIA_1+4
+VIA_1_T1CH=VIA_1+5
+VIA_1_T1LL=VIA_1+6
+VIA_1_T1LH=VIA_1+7
+VIA_1_T2CL=VIA_1+8
+VIA_1_T2CH=VIA_1+9
+VIA_1_SR=VIA_1+10
+VIA_1_AUX=VIA_1+11
+VIA_1_PER=VIA_1+12
+
 
 
 ; MicroKernel Architecture
@@ -60,8 +89,15 @@ __K_BOOT:
     sta SYSTEM_BUS_READ_POINTER			; init system bus pointer
     sta SYSTEM_BUS_WRITE_POINTER		; init system bus pointer
     
+    lda #$00		; load 00 into A
+    sta VIA_0_DDRA	; set via 0 post to input
+    sta VIA_1_DDRA	; set via 1 post to input 
+    lda #$ff		; load ff into A
+    sta VIA_0_DDRB	; set via 0 port to output
+    sta VIA_1_DDRA	; set via 0 port to output
 
-    ; Kenrel initialization, first step: read the kernel init module and enable it
+
+    ; Kenrel initialization: read the kernel init module and enable it
     
     __call_and_init:
         lda K_MODULE_PRIORITY_LIST_HEAD, x
@@ -72,8 +108,6 @@ __K_BOOT:
         jsr __k_initialize_device ; initialize device
         inx
         dey
-        cpx #20
-        beq __k_error_panic
         cpy #$00
         bne __call_and_init 
         beq __call_and_init_end
@@ -85,7 +119,7 @@ __K_BOOT:
         
     jsr ZENITH_INITFS   ; nitialize zenith FS
 
-    jsr __K_RAMS ; initialize ram management system (RAMS)
+    ;jsr __K_RAMS ; initialize ram management system (RAMS)
 
     jmp __bash_cli
 
