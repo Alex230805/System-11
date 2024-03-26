@@ -19,9 +19,9 @@ SYS_12=$0c
 SYSTEM_CALL_0=$00 ; here insert the system call like "SYSTEM_CALL_O=print_with_graphic_card"
 SYSTEM_CALL_1=$00 ; or "SYSTEM_CALL_3=__ram_malloc"
 SYSTEM_CALL_2=$00
-SYSTEM_CALL_3=__obd_write_with_adr
-SYSTEM_CALL_4=__ram_malloc
-SYSTEM_CALL_5=__ram_free
+SYSTEM_CALL_3=__odb_write_with_adr
+SYSTEM_CALL_4=      ;__ram_malloc
+SYSTEM_CALL_5=      ;__ram_free
 SYSTEM_CALL_6=__ZENITH_SUBCALL ; based on x register for the  call id 
 SYSTEM_CALL_7=$00
 SYSTEM_CALL_8=$00
